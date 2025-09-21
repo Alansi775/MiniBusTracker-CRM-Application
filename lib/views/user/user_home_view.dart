@@ -1,8 +1,8 @@
-// lib/views/user/user_home_view.dart (الإصدار الاحترافي والنهائي الموحد)
+// lib/views/user/user_home_view.dart 
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// 💡 استيراد Google Fonts
+//  استيراد Google Fonts
 import 'package:google_fonts/google_fonts.dart'; 
 import '../../controllers/auth_controller.dart'; 
 import '../../controllers/bus_controller.dart'; 
@@ -12,7 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserHomeView extends GetView<BusController> { 
   const UserHomeView({super.key});
 
-  // 🚨 الألوان الموحدة (الأسود الداكن والذهبي)
+  // الألوان الموحدة (الأسود الداكن والذهبي)
   static const Color primaryColor = Colors.black87; // أسود داكن (Brand)
   static const Color accentColor = Color(0xFFFFC107); // ذهبي (Action)
   
@@ -21,7 +21,7 @@ class UserHomeView extends GetView<BusController> {
   static const Color stoppedColor = Color(0xFFDC3545); // أحمر نبيذي (للحالة المتوقفة)
   static const Color backgroundColor = Color(0xFFF0F0F0); 
 
-  // 🚨 تعريف أنماط الخطوط
+  //  تعريف أنماط الخطوط
   static final TextStyle primaryTextStyle = GoogleFonts.playfairDisplay(color: primaryColor);
   static final TextStyle secondaryTextStyle = const TextStyle(color: Colors.black87);
 
@@ -101,7 +101,7 @@ class UserHomeView extends GetView<BusController> {
         child: Text(
           fullText,
           textAlign: TextAlign.center,
-          // 🚨 تطبيق الخط الجديد واللون الأساسي
+          //  تطبيق الخط الجديد واللون الأساسي
           style: primaryTextStyle.copyWith(
             fontSize: 24, // زيادة الحجم قليلاً ليتناسب مع الخط الجديد
             fontWeight: FontWeight.w800, 
@@ -145,7 +145,7 @@ class UserHomeView extends GetView<BusController> {
                 size: 30,
               ),
               const SizedBox(width: 10),
-              // 🚨 تطبيق الخط الجديد
+              //  تطبيق الخط الجديد
               Text(
                 'TAKİP DURUMU: $statusText',
                 style: primaryTextStyle.copyWith(fontSize: 20, fontWeight: FontWeight.w900, color: statusColor),
@@ -169,7 +169,7 @@ class UserHomeView extends GetView<BusController> {
               children: [
                 const Divider(thickness: 1, color: Colors.grey), 
                 const SizedBox(height: 10),
-                // 🚨 تطبيق الخط الجديد
+                //  تطبيق الخط الجديد
                 Text('SON KONUM BİLGİSİ:', style: secondaryTextStyle.copyWith(fontSize: 14, color: primaryColor, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 
@@ -178,14 +178,14 @@ class UserHomeView extends GetView<BusController> {
                     : _buildNarrowLocationDisplay(location),
                 
                 const SizedBox(height: 10),
-                // 🚨 تطبيق الخط الجديد
+                //  تطبيق الخط الجديد
                 Text(
                   'Güncelleme Saati: ${_formatTimestamp(location['timestamp'])}', 
                   style: secondaryTextStyle.copyWith(fontSize: 12, color: Colors.grey.shade600)),
               ],
             )
           else 
-            // 🚨 تطبيق الخط الجديد
+            //  تطبيق الخط الجديد
             Text(
               'Konum takibi şu anda devre dışı.', 
               style: secondaryTextStyle.copyWith(fontSize: 16, color: Colors.grey.shade700)),
@@ -209,10 +209,10 @@ class UserHomeView extends GetView<BusController> {
       ),
       child: Column(
         children: [
-          // 🚨 تطبيق الخط الجديد
+          //  تطبيق الخط الجديد
           Text(title, style: secondaryTextStyle.copyWith(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
-          // 🚨 تطبيق الخط الجديد
+          //  تطبيق الخط الجديد
           Text(value, style: primaryTextStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w900, color: primaryColor)), 
         ],
       ),
@@ -263,7 +263,7 @@ class UserHomeView extends GetView<BusController> {
         ),
         label: Text(
           isTracking ? 'Takibi Durdur' : 'Takibi BAŞLAT',
-          // 🚨 تطبيق الخط الجديد
+          //  تطبيق الخط الجديد
           style: secondaryTextStyle.copyWith(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
         ),
         style: ElevatedButton.styleFrom(
@@ -282,7 +282,7 @@ class UserHomeView extends GetView<BusController> {
     return Container(
       padding: const EdgeInsets.only(top: 25, bottom: 15, left: 20, right: 20),
       decoration: BoxDecoration(
-        color: primaryColor, // 🚨 اللون الأساسي: الأسود الداكن
+        color: primaryColor, //  اللون الأساسي: الأسود الداكن
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
@@ -301,9 +301,9 @@ class UserHomeView extends GetView<BusController> {
         children: [
           Row(
             children: [
-              Icon(Icons.bus_alert_rounded, color: accentColor, size: 30), // 🚨 أيقونة بالذهبي
+              Icon(Icons.bus_alert_rounded, color: accentColor, size: 30), //  أيقونة بالذهبي
               const SizedBox(width: 10),
-              // 🚨 تطبيق الخط الجديد
+              //  تطبيق الخط الجديد
               Text(
                 'SÜRÜCÜ PANELİ', 
                 style: primaryTextStyle.copyWith(
