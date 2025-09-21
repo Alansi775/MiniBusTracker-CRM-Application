@@ -1,10 +1,10 @@
-// lib/controllers/bus_controller.dart (للتتبع اللحظي)
+// lib/controllers/bus_controller.dart
 
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geolocator/geolocator.dart'; // 🚨 تم إضافتها الآن
+import 'package:geolocator/geolocator.dart';
 import '../services/auth_service.dart';
 
 class BusController extends GetxController {
