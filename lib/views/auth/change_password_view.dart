@@ -1,8 +1,8 @@
-// lib/views/auth/change_password_view.dart (الإصدار النهائي الموحد مع الخطوط)
+// lib/views/auth/change_password_view.dart 
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// 💡 استيراد Google Fonts
+//  استيراد Google Fonts
 import 'package:google_fonts/google_fonts.dart'; 
 import '../../controllers/auth_controller.dart';
 
@@ -18,7 +18,7 @@ class ChangePasswordView extends GetView<AuthController> {
   // اللون الأساسي للزر
   static const Color buttonFillColor = primaryColor; 
 
-  // 🚨 تعريف أنماط الخطوط
+  //  تعريف أنماط الخطوط
   static final TextStyle primaryTextStyle = GoogleFonts.playfairDisplay(color: primaryColor);
   static final TextStyle secondaryTextStyle = const TextStyle(color: Colors.black87);
 
@@ -35,7 +35,7 @@ class ChangePasswordView extends GetView<AuthController> {
     return TextField(
       controller: controller,
       obscureText: obscureText,
-      // 🚨 استخدام secondaryTextStyle للنصوص الداخلية
+      //  استخدام secondaryTextStyle للنصوص الداخلية
       style: secondaryTextStyle.copyWith(fontWeight: FontWeight.w500), 
       decoration: InputDecoration(
         labelText: label,
@@ -69,7 +69,7 @@ class ChangePasswordView extends GetView<AuthController> {
     return Scaffold(
       backgroundColor: lightBackgroundColor,
       appBar: AppBar( 
-        // 🚨 تطبيق الخط على عنوان الـ AppBar
+        //  تطبيق الخط على عنوان الـ AppBar
         title: Text(
           'Şifre Güncelleme', 
           style: primaryTextStyle.copyWith(fontWeight: FontWeight.w900, fontSize: 20)),
@@ -103,7 +103,7 @@ class ChangePasswordView extends GetView<AuthController> {
                 Text(
                   'Hesap Güvenliği', 
                   textAlign: TextAlign.center,
-                  // 🚨 تطبيق الخط الجديد هنا
+                  //  تطبيق الخط الجديد هنا
                   style: primaryTextStyle.copyWith(
                       fontSize: 26,
                       fontWeight: FontWeight.w900, 
@@ -120,7 +120,7 @@ class ChangePasswordView extends GetView<AuthController> {
                   ),
                   child: Text(
                     'Parolanızı Yenileyin',
-                    // 🚨 تطبيق الخط الجديد على التاق
+                    //  تطبيق الخط الجديد على التاق
                     style: secondaryTextStyle.copyWith(
                       fontSize: 14, 
                       fontWeight: FontWeight.bold),
@@ -178,7 +178,7 @@ class ChangePasswordView extends GetView<AuthController> {
                         ),
                         child: Text(
                           'Şifreyi Kaydet', 
-                          // 🚨 تطبيق الخط الجديد على الزر
+                          //  تطبيق الخط الجديد على الزر
                           style: secondaryTextStyle.copyWith(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                       )),
