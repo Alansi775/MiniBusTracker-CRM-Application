@@ -1,4 +1,4 @@
-// lib/views/admin/add_user_view.dart (التعديل للتصميم الحديث والتوسط)
+// lib/views/admin/add_user_view.dart
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -53,7 +53,7 @@ class AddUserView extends GetView<AdminController> {
 
   @override
   Widget build(BuildContext context) {
-    // ⚠️ النقطة الثانية: جعل الشاشة في المنتصف
+    // النقطة الثانية: جعل الشاشة في المنتصف
     double cardWidth = kIsWeb ? 550 : double.infinity;
 
     return Scaffold(
@@ -116,7 +116,7 @@ class AddUserView extends GetView<AdminController> {
                 ),
                 const SizedBox(height: 25),
 
-                // ⚠️ النقطة الثالثة: استبدال Dropdown بتصميم Tags/Chips
+                // النقطة الثالثة: استبدال Dropdown بتصميم Tags/Chips
                 const Text('Kullanıcı Rolü Seçin:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                 const SizedBox(height: 10),
                 Obx(() => Wrap(
