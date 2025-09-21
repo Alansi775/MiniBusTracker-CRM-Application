@@ -15,7 +15,7 @@ class AuthService extends GetxService {
   StreamSubscription<User?>? _authStateSubscription;
 
   // ==================================================
-  // === 🚨 الخصائص المطلوبة من BusController (حل الأخطاء) 🚨 ===
+  // === الخصائص المطلوبة من BusController (حل الأخطاء) ===
   // ==================================================
   
   // 1. خاصية isAuthenticated
@@ -73,11 +73,11 @@ class AuthService extends GetxService {
     }
 
     if (firebaseUser != null) {
-      isAuthenticated.value = true; // 🚨 تحديث عند تسجيل الدخول
+      isAuthenticated.value = true; // تحديث عند تسجيل الدخول
       debugPrint('AuthService: User logged in (UID: ${firebaseUser.uid}). Fetching Firestore data...');
       await fetchUserData(firebaseUser.uid);
     } else {
-      isAuthenticated.value = false; // 🚨 تحديث عند تسجيل الخروج
+      isAuthenticated.value = false; // تحديث عند تسجيل الخروج
       debugPrint('AuthService: User logged out/null. Redirecting to /login.');
       currentUser.value = null;
       Get.offAllNamed('/login');
