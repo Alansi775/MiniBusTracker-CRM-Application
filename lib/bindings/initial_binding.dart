@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../services/auth_service.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/admin_controller.dart'; 
-import '../controllers/bus_controller.dart'; // 🚨 (1) إضافة الكنترولر الجديد
+import '../controllers/bus_controller.dart'; 
 
 class InitialBinding implements Bindings {
   @override
@@ -25,6 +25,6 @@ class InitialBinding implements Bindings {
     Get.lazyPut<AdminController>(() => AdminController(), fenix: true); 
     
     // (3) BusController
-    Get.lazyPut<BusController>(() => BusController(), fenix: true); // 🚨 (2) إضافة BusController بـ lazyPut
+    Get.lazyPut<BusController>(() => BusController(), fenix: true); // (2) إضافة BusController بـ lazyPut
   }
 }
