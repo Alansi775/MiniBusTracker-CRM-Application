@@ -1,10 +1,10 @@
-// lib/views/auth/sign_up_view.dart (التعديل النهائي لإضافة ElegantHoverButton)
+// lib/views/auth/sign_up_view.dart 
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart'; 
 import '../../controllers/auth_controller.dart';
-// 🚨 استيراد الزر الجديد
+//  استيراد الزر الجديد
 import '../../widgets/elegant_hover_button.dart'; 
 
 class SignUpView extends GetView<AuthController> {
@@ -24,7 +24,7 @@ class SignUpView extends GetView<AuthController> {
     Widget? suffixIcon,
     bool readOnly = false,
   }) {
-    // ... (لا يوجد تغيير في دالة _buildTextField) ...
+    
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -176,7 +176,7 @@ class SignUpView extends GetView<AuthController> {
                     )),
                 const SizedBox(height: 40),
 
-                // 🚨🚨 استبدال ElevatedButton بـ ElegantHoverButton
+                // استبدال ElevatedButton بـ ElegantHoverButton
                 Obx(() => controller.isLoading.value
                     ? CircularProgressIndicator(color: accentColor)
                     : ElegantHoverButton(
