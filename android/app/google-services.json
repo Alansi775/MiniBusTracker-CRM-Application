@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "915379460830",
+    "project_id": "minibuscrm",
+    "storage_bucket": "minibuscrm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:915379460830:android:891d70d5c5874a3ddf004f",
+        "android_client_info": {
+          "package_name": "com.example.minibus_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHIKS8EW1t72Q51o0Qh1ObscZly3-qmUs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
