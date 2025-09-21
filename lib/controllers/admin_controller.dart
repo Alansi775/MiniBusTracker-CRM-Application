@@ -9,7 +9,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart'; 
 
-// ⚠️ تأكد من وجود هذين الملفين في مساراتهما
+//  تأكد من وجود هذين الملفين في مساراتهما
 import '../data/models/user_model.dart'; 
 import '../services/auth_service.dart';
 
@@ -98,7 +98,7 @@ class AdminController extends GetxController {
     ever(intervalBetweenBuses, (value) => intervalController.text = value.toString());
   }
 
-  // 🚨 دالة لبدء الاستماع لكل المستخدمين والمواقع
+  // دالة لبدء الاستماع لكل المستخدمين والمواقع
   void _startUserAndLocationListeners() {
      // 1. الاستماع لجميع المستخدمين (Admin, User)
     _db.collection('users')
@@ -178,7 +178,7 @@ class AdminController extends GetxController {
     }
   }
 
-  // 🚨 الحظر / التفعيل
+  // الحظر / التفعيل
   Future<void> toggleUserBlock(UserModel user, bool isBlocked) async {
     try {
       await _db.collection('users').doc(user.uid).update({
@@ -191,7 +191,7 @@ class AdminController extends GetxController {
     }
   }
 
-  // 🚨 حذف المستخدم
+  // حذف المستخدم
   Future<void> deleteUser(UserModel user) async {
     try {
       // 1. حذف الموقع من bus_locations (إذا كان user)
@@ -202,7 +202,7 @@ class AdminController extends GetxController {
       // 2. حذف المستخدم من Firestore
       await _db.collection('users').doc(user.uid).delete();
       
-      // ⚠️ ملاحظة: حذف المستخدم من Firebase Auth يتطلب Server/Admin SDK
+      // ملاحظة: حذف المستخدم من Firebase Auth يتطلب Server/Admin SDK
       // سنعتمد على أن التطبيق يتجاهل المستخدم المحذوف من Firestore.
       
       Get.snackbar('Başarılı', '${user.email} sistemden silindi.', 
@@ -212,7 +212,7 @@ class AdminController extends GetxController {
     }
   }
   
-  // 🚨 عرض الموقع على الخريطة (URL Launcher)
+  // عرض الموقع على الخريطة (URL Launcher)
   void viewUserOnMap(String userId, double? lat, double? lng) async {
     if (lat == null || lng == null) {
       Get.snackbar('Hata', 'Kullanıcının canlı konumu mevcut değil.', 
