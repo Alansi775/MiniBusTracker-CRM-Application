@@ -1,8 +1,8 @@
-// lib/views/admin/admin_home_view.dart (الكود النهائي والمصمم: الأسود/الذهبي مع قائمة المستخدم)
+// lib/views/admin/admin_home_view.dart 
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart'; // 💡 لاستخدام خط Google Fonts
+import 'package:google_fonts/google_fonts.dart'; // لاستخدام خط Google Fonts
 import '../../controllers/admin_controller.dart'; 
 import '../../controllers/auth_controller.dart'; 
 import '../../services/auth_service.dart'; 
@@ -13,7 +13,7 @@ import '../../widgets/elegant_hover_button.dart';
 class AdminHomeView extends GetView<AdminController> {
   const AdminHomeView({super.key});
 
- // 🚨 الألوان الموحدة للتصميم الجديد (مطابقة لـ SignIn)
+ // الألوان الموحدة للتصميم الجديد (مطابقة لـ SignIn)
   static const Color primaryColor = Colors.black87; 
   static const Color secondaryColor = Color(0xFFFFC107); 
   static const Color successColor = Color(0xFF28A745); 
@@ -21,7 +21,7 @@ class AdminHomeView extends GetView<AdminController> {
   static const Color lightBackground = Color(0xFFF0F0F0); 
 
 
-  // 🚨🚨 التعديل: استخدام static final لتعريف أنماط الخطوط
+  // التعديل: استخدام static final لتعريف أنماط الخطوط
   static final TextStyle primaryTextStyle = GoogleFonts.playfairDisplay(color: primaryColor);
   static final TextStyle secondaryTextStyle = const TextStyle(color: Colors.black87);
 
@@ -123,7 +123,7 @@ class AdminHomeView extends GetView<AdminController> {
     return Container(
       padding: const EdgeInsets.only(top: 25, bottom: 15, left: 20, right: 20),
       decoration: BoxDecoration(
-        color: primaryColor, // 🚨 اللون الأساسي: الأسود الداكن
+        color: primaryColor, // اللون الأساسي: الأسود الداكن
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
@@ -157,7 +157,7 @@ class AdminHomeView extends GetView<AdminController> {
             ],
           ),
           
-          // 🚨 قائمة المستخدم الجديدة
+          // قائمة المستخدم الجديدة
           Row(
             children: [
               // زر الانتقال للوحة التحكم الرئيسية
@@ -169,7 +169,7 @@ class AdminHomeView extends GetView<AdminController> {
               
               const SizedBox(width: 10),
               
-              // 🚨 إضافة قائمة المستخدم المنبثقة (Burger Menu البديل)
+              // إضافة قائمة المستخدم المنبثقة (Burger Menu البديل)
               PopupMenuButton<String>(
                 color: Colors.white, // خلفية القائمة بيضاء
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -192,7 +192,7 @@ class AdminHomeView extends GetView<AdminController> {
                       children: [
                         Row(
                           children: [
-                            // 🚨 الافتار (Avatar)
+                            // الافتار (Avatar)
                             CircleAvatar(
                               radius: 20,
                               backgroundColor: secondaryColor, // خلفية ذهبية
@@ -269,7 +269,6 @@ class AdminHomeView extends GetView<AdminController> {
   // ----------------------------------------------------
   
   Widget _buildLoadingCard() {
-    // ... (الكود لم يتغير هنا) ...
     return Card(
       elevation: 8, 
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
@@ -345,7 +344,7 @@ class AdminHomeView extends GetView<AdminController> {
                 decoration: InputDecoration(
                   labelText: 'İlk Kalkış (HH:MM)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  prefixIcon: Icon(Icons.schedule, color: secondaryColor), // 🚨 الأيقونة باللون الذهبي
+                  prefixIcon: Icon(Icons.schedule, color: secondaryColor), // الأيقونة باللون الذهبي
                 ),
                 onChanged: (value) => controller.referenceStartTime.value = value,
               ),
@@ -358,7 +357,7 @@ class AdminHomeView extends GetView<AdminController> {
                 decoration: InputDecoration(
                   labelText: 'Minibüs Aralığı (dk)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  prefixIcon: Icon(Icons.timer, color: secondaryColor), // 🚨 الأيقونة باللون الذهبي
+                  prefixIcon: Icon(Icons.timer, color: secondaryColor), // الأيقونة باللون الذهبي
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) => controller.intervalBetweenBuses.value = int.tryParse(value) ?? 30,
@@ -414,7 +413,7 @@ class AdminHomeView extends GetView<AdminController> {
           ),
         ),
         const SizedBox(width: 15),
-        // 🚨 ElegantHoverButton باللون الأخضر
+        // ElegantHoverButton باللون الأخضر
         ElegantHoverButton(
           onPressed: controller.addStop,
           text: 'Ekle',
@@ -452,7 +451,7 @@ class AdminHomeView extends GetView<AdminController> {
                 tileColor: index % 2 == 0 ? primaryColor.withOpacity(0.03) : Colors.white, // تظليل خفيف
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 leading: CircleAvatar(
-                  backgroundColor: secondaryColor, // 🚨 الأرقام باللون الذهبي
+                  backgroundColor: secondaryColor, // الأرقام باللون الذهبي
                   child: Text('${index + 1}', style: secondaryTextStyle.copyWith(color: primaryColor, fontWeight: FontWeight.bold)),
                 ),
                 title: Text(stop.name, style: secondaryTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -475,7 +474,7 @@ class AdminHomeView extends GetView<AdminController> {
         ElegantHoverButton(
           onPressed: () => controller.uploadExcelFile(false),
           width: double.infinity, 
-          backgroundColor: primaryColor, // 🚨 أسود داكن
+          backgroundColor: primaryColor, // أسود داكن
           child: Obx(() => Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -494,7 +493,7 @@ class AdminHomeView extends GetView<AdminController> {
               value: controller.includeReturn.value,
               onChanged: (value) => controller.includeReturn.value = value ?? false,
               controlAffinity: ListTileControlAffinity.leading,
-              activeColor: secondaryColor, // 🚨 تحديد بالذهبي
+              activeColor: secondaryColor, // تحديد بالذهبي
               contentPadding: EdgeInsets.zero,
             )),
             
@@ -503,11 +502,11 @@ class AdminHomeView extends GetView<AdminController> {
               visible: controller.includeReturn.value,
               child: Padding(
                 padding: const EdgeInsets.only(top: 10.0),
-                // 🚨 ElegantHoverButton بلون ذهبي أفتح
+                //  ElegantHoverButton بلون ذهبي أفتح
                 child: ElegantHoverButton(
                   onPressed: () => controller.uploadExcelFile(true),
                   width: double.infinity, 
-                  backgroundColor: secondaryColor, // 🚨 ذهبي كامل
+                  backgroundColor: secondaryColor, //  ذهبي كامل
                   child: Obx(() => Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -528,7 +527,7 @@ class AdminHomeView extends GetView<AdminController> {
               text: controller.isAnalyzing.value ? null : 'Gecikme Analizi BAŞLAT',
               width: double.infinity, 
               height: 60, 
-              backgroundColor: successColor, // 🚨 أخضر للبدء
+              backgroundColor: successColor, // أخضر للبدء
               child: controller.isAnalyzing.value 
                   ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 4))
                   : Row(
@@ -575,7 +574,7 @@ class AdminHomeView extends GetView<AdminController> {
           decoration: InputDecoration(
             labelText: 'Plaka Ara',
             hintText: '35BNV175',
-            prefixIcon: Icon(Icons.search, color: secondaryColor), // 🚨 الأيقونة باللون الذهبي
+            prefixIcon: Icon(Icons.search, color: secondaryColor), // الأيقونة باللون الذهبي
             suffixIcon: controller.searchQuery.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.clear, color: Colors.grey),
