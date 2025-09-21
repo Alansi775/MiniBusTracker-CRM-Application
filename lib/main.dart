@@ -47,16 +47,16 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         useMaterial3: false, 
 
-        // 🚨 1. تطبيق خط Playfair Display كخط افتراضي للنصوص
+        //  1. تطبيق خط Playfair Display كخط افتراضي للنصوص
         fontFamily: GoogleFonts.playfairDisplay().fontFamily,
         
-        // 🚨 2. نحدد لون الأيقونات فقط
+        //  2. نحدد لون الأيقونات فقط
         iconTheme: const IconThemeData(
           color: primaryBrandColor, 
           // تم حذف: fontFamily: 'MaterialIcons',
         ),
         
-        // 🚨 3. توحيد ثيم الـ AppBar
+        //  3. توحيد ثيم الـ AppBar
         appBarTheme: AppBarTheme(
           elevation: 0, 
           centerTitle: true,
