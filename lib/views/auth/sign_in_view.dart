@@ -1,11 +1,11 @@
-// lib/views/auth/sign_in_view.dart (الإصدار النهائي مع زر التحويم الأنيق)
+// lib/views/auth/sign_in_view.dart 
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart'; 
 import '../../controllers/auth_controller.dart';
 import '../../widgets/custom_shimmer.dart'; 
-// 🚨 استيراد زر التحويم
+//  استيراد زر التحويم
 import '../../widgets/elegant_hover_button.dart'; 
 
 class SignInView extends GetView<AuthController> {
@@ -23,7 +23,6 @@ class SignInView extends GetView<AuthController> {
     bool obscureText = false,
     Widget? suffixIcon,
   }) {
-    // ... (لا تغيير في دالة _buildTextField) ...
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -155,7 +154,7 @@ class SignInView extends GetView<AuthController> {
                     )),
                 const SizedBox(height: 40),
 
-                // 🚨🚨 زر تسجيل الدخول (تم استبداله بـ ElegantHoverButton)
+                // زر تسجيل الدخول (تم استبداله بـ ElegantHoverButton)
                 Obx(() => controller.isLoading.value
                     ? CircularProgressIndicator(color: accentColor)
                     : ElegantHoverButton(
