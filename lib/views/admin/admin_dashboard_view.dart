@@ -12,14 +12,14 @@ import '../../widgets/custom_shimmer.dart';
 class AdminDashboardView extends GetView<AdminController> {
   const AdminDashboardView({super.key});
 
-  // 🚨 الألوان الجديدة (مطابقة لـ AdminHomeView و SignInView)
+
   static const Color primaryColor = Colors.black87; // أسود داكن (الرئيسي)
   static const Color activeColor = Color(0xFF28A745); // أخضر هادئ (Success Color)
   static const Color blockedColor = Color(0xFFDC3545); // أحمر نبيذي
   static const Color accentColor = Color(0xFFFFC107); // لون مكمل (ذهبي/برتقالي)
   static const Color lightBackground = Color(0xFFF0F0F0); // خلفية فاتحة
 
-  // 🚨🚨 تعريف الخطوط كـ static final
+  // تعريف الخطوط كـ static final
   static final TextStyle primaryTextStyle = GoogleFonts.playfairDisplay(color: primaryColor);
   static final TextStyle secondaryTextStyle = const TextStyle(color: Colors.black87);
   
@@ -31,7 +31,7 @@ class AdminDashboardView extends GetView<AdminController> {
     final AuthController authController = Get.find<AuthController>();
 
     return Scaffold(
-      // 🚨 تطبيق الخلفية الفاتحة الجديدة
+      // تطبيق الخلفية الفاتحة الجديدة
       backgroundColor: lightBackground,
       body: SafeArea(
         child: Column(
@@ -52,11 +52,11 @@ class AdminDashboardView extends GetView<AdminController> {
                       _buildStatsRow(),
                       
                       const SizedBox(height: 30),
-                      // 🚨 تطبيق الخط الجديد
+                      // تطبيق الخط الجديد
                       Text(
                         'Sistem Kullanıcı Yönetimi', 
                         style: primaryTextStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w800)),
-                      const Divider(height: 20, thickness: 2, color: primaryColor), // 🚨 تطبيق لون الفاصل
+                      const Divider(height: 20, thickness: 2, color: primaryColor), // تطبيق لون الفاصل
                       
                       _buildUserTabs(isSuperAdmin),
                     ],
@@ -77,7 +77,7 @@ class AdminDashboardView extends GetView<AdminController> {
     return Container(
       padding: const EdgeInsets.only(top: 25, bottom: 15, left: 20, right: 20),
       decoration: BoxDecoration(
-        color: primaryColor, // 🚨 اللون الأساسي: الأسود الداكن
+        color: primaryColor, // اللون الأساسي: الأسود الداكن
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
@@ -102,9 +102,9 @@ class AdminDashboardView extends GetView<AdminController> {
           
           Row(
             children: [
-              Icon(Icons.admin_panel_settings_rounded, color: accentColor, size: 30), // 🚨 الأيقونة بالذهبي
+              Icon(Icons.admin_panel_settings_rounded, color: accentColor, size: 30), // الأيقونة بالذهبي
               const SizedBox(width: 10),
-              // 🚨 تطبيق الخط الجديد
+              // تطبيق الخط الجديد
               Text(
                 'YÖNETİCİ PANELİ', 
                 style: primaryTextStyle.copyWith(
@@ -121,7 +121,7 @@ class AdminDashboardView extends GetView<AdminController> {
             children: [
               if (isSuperAdmin)
                 IconButton(
-                  icon: Icon(Icons.pending_actions_rounded, color: accentColor, size: 28), // 🚨 الأيقونة بالذهبي
+                  icon: Icon(Icons.pending_actions_rounded, color: accentColor, size: 28), // الأيقونة بالذهبي
                   tooltip: 'Bekleyen İstekler',
                   onPressed: () => Get.toNamed('/pending_requests'),
                 ),
@@ -155,19 +155,19 @@ class AdminDashboardView extends GetView<AdminController> {
             title: 'Toplam Yönetici', 
             count: adminsCount, 
             icon: Icons.shield_sharp, 
-            color: primaryColor // 🚨 اللون الأسود
+            color: primaryColor // اللون الأسود
           ),
           _buildStatCard(
             title: 'Toplam Sürücü', 
             count: usersCount, 
             icon: Icons.people_alt, 
-            color: activeColor // 🚨 اللون الأخضر
+            color: activeColor // اللون الأخضر
           ),
           _buildStatCard(
             title: 'Bekleyen İstekler', 
             count: pendingCount, 
             icon: Icons.pending_actions, 
-            color: accentColor // 🚨 اللون الذهبي
+            color: accentColor // اللون الذهبي
           ),
         ],
       );
@@ -189,10 +189,10 @@ class AdminDashboardView extends GetView<AdminController> {
               const SizedBox(height: 5),
               Text(
                 title,
-                style: secondaryTextStyle.copyWith(fontSize: 14, color: Colors.grey), // 🚨 تطبيق الخط
+                style: secondaryTextStyle.copyWith(fontSize: 14, color: Colors.grey), // تطبيق الخط
               ),
               const SizedBox(height: 5),
-              // 🚨 تطبيق الخط الجديد للعدد
+              // تطبيق الخط الجديد للعدد
               Text(
                 count.toString(),
                 style: primaryTextStyle.copyWith(fontSize: 28, fontWeight: FontWeight.w900, color: color),
@@ -227,12 +227,12 @@ class AdminDashboardView extends GetView<AdminController> {
         child: Column(
           children: [
             TabBar(
-              labelColor: primaryColor, // 🚨 لون التبويب النشط: الأسود
-              indicatorColor: accentColor, // 🚨 لون المؤشر: الذهبي
+              labelColor: primaryColor, // لون التبويب النشط: الأسود
+              indicatorColor: accentColor, // لون المؤشر: الذهبي
               unselectedLabelColor: Colors.grey,
               indicatorWeight: 4.0,
               tabs: [
-                // 🚨 تطبيق الخط الجديد
+                // تطبيق الخط الجديد
                 Tab(child: Text('Yöneticiler (${controller.allUsers.where((u) => u.role == UserRole.admin).length})', style: secondaryTextStyle)),
                 Tab(child: Text('Sürücüler (${controller.allUsers.where((u) => u.role == UserRole.user).length})', style: secondaryTextStyle)),
               ],
@@ -283,7 +283,7 @@ class AdminDashboardView extends GetView<AdminController> {
               radius: 25,
               child: Icon(user.isBlocked ? Icons.lock : Icons.check, color: Colors.white, size: 24),
             ),
-            // 🚨 تطبيق الخط الجديد على العنوان
+            // تطبيق الخط الجديد على العنوان
             title: Text('${user.name} ${user.surname}', style: secondaryTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16, color: primaryColor)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,7 +372,7 @@ class AdminDashboardView extends GetView<AdminController> {
   
   // ويدجت مساعدة للـ Shimmer 
   Widget _buildLoadingDashboard() {
-    // ... (لا حاجة لتغيير هنا، لأنها تستخدم الألوان البيضاء والرمادية الافتراضية للشيمر)
+    // (لا حاجة لتغيير هنا، لأنها تستخدم الألوان البيضاء والرمادية الافتراضية للشيمر)
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
