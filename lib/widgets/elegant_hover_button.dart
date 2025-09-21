@@ -1,9 +1,9 @@
-// lib/widgets/elegant_hover_button.dart (الكود المُعدَّل والنهائي)
+// lib/widgets/elegant_hover_button.dart 
 
 import 'package:flutter/material.dart';
 import 'custom_shimmer.dart'; 
 
-// 🚨 تعريف الألوان الجديدة هنا (الأسود والذهبي)
+//  تعريف الألوان الجديدة هنا (الأسود والذهبي)
 const Color primaryColor = Colors.black87; // أسود داكن (افتراضي)
 const Color successColor = Color(0xFF28A745); // أخضر هادئ
 const Color accentColor = Color(0xFFFFC107); // ذهبي
@@ -14,7 +14,7 @@ class ElegantHoverButton extends StatefulWidget {
   final double? width; 
   final double height; 
   final Widget? child; 
-  // 🚨 تغيير اللون الافتراضي ليستخدم الأسود الداكن
+  // تغيير اللون الافتراضي ليستخدم الأسود الداكن
   final Color backgroundColor; 
 
   const ElegantHoverButton({
@@ -24,7 +24,7 @@ class ElegantHoverButton extends StatefulWidget {
     this.width, 
     this.height = 50.0, 
     this.child, 
-    this.backgroundColor = primaryColor, // 💡 اللون الافتراضي أصبح Colors.black87
+    this.backgroundColor = primaryColor, // اللون الافتراضي أصبح Colors.black87
   }) : assert(text != null || child != null, 'Either text or child must be provided.');
 
   @override
@@ -61,7 +61,7 @@ class _ElegantHoverButtonState extends State<ElegantHoverButton> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
-            // 🚨 الحافة الذهبية تُطبق فقط عندما يكون اللون هو primaryColor (الأسود)
+            //  الحافة الذهبية تُطبق فقط عندما يكون اللون هو primaryColor (الأسود)
             side: BorderSide(
               color: widget.backgroundColor == primaryColor ? accentColor : Colors.transparent, 
               width: 1.5,
