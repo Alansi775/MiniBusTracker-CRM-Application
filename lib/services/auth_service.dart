@@ -126,13 +126,18 @@ class AuthService extends GetxService {
       return;
     }
     
-    if (user.role == UserRole.superAdmin || user.role == UserRole.admin) {
-      debugPrint('AuthService: -> Redirecting to Admin Delay Analysis.');
-      Get.offAllNamed('/admin/delay_analysis'); 
-    } else if (user.role == UserRole.user) {
-      debugPrint('AuthService: -> Redirecting to User Home.');
-      Get.offAllNamed('/user_home');
-    } else {
+      if (user.role == UserRole.superAdmin) {
+    // التوجيه إلى لوحة التحكم الجديدة
+    Get.offAllNamed('/admin_dashboard'); 
+  } 
+  else if (user.role == UserRole.admin) {
+    // 🚨 التعديل: توجيه Admin أيضاً إلى لوحة التحكم
+    Get.offAllNamed('/admin_dashboard'); 
+  } 
+  else if (user.role == UserRole.user) {
+    // المستخدمون العاديون يذهبون إلى وجهتهم المعتادة
+    Get.offAllNamed('/admin/delay_analysis');  
+  }  else {
        _auth.signOut();
     }
   }

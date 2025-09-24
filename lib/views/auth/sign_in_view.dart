@@ -22,10 +22,12 @@ class SignInView extends GetView<AuthController> {
     required IconData icon,
     bool obscureText = false,
     Widget? suffixIcon,
+    void Function(String)? onSubmitted,
   }) {
     return TextField(
       controller: controller,
       obscureText: obscureText,
+      onSubmitted: onSubmitted, 
       style: const TextStyle(fontWeight: FontWeight.w500), 
       decoration: InputDecoration(
         labelText: label,
@@ -63,7 +65,7 @@ class SignInView extends GetView<AuthController> {
 
         // النص بدون 'fontWeight' ليكون ناعماً
         Text(
-          'MINIBUS',
+          'MİNİBÜSCRM',
           style: GoogleFonts.playfairDisplay(
               fontSize: 36, 
               color: primaryColor, 
@@ -142,6 +144,7 @@ class SignInView extends GetView<AuthController> {
                       label: 'Şifre',
                       icon: Icons.lock_outline,
                       obscureText: !controller.isPasswordVisible.value,
+                      onSubmitted: (_) => controller.signIn(),
                       suffixIcon: IconButton(
                         icon: Icon(
                           controller.isPasswordVisible.value

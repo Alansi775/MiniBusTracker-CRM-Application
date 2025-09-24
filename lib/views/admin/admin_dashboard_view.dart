@@ -74,69 +74,154 @@ class AdminDashboardView extends GetView<AdminController> {
   // --- CUSTOM HEADER (AppBar البديل) ---
   // ----------------------------------------------------
   Widget _buildCustomHeader(bool isSuperAdmin, AuthController authController) {
-    return Container(
-      padding: const EdgeInsets.only(top: 25, bottom: 15, left: 20, right: 20),
-      decoration: BoxDecoration(
-        color: primaryColor, // اللون الأساسي: الأسود الداكن
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+  // جلب معلومات المستخدم الحالي
+  final currentUser = authController.authService.currentUser.value;
+  final userName = currentUser?.name ?? 'Admin';
+  final userRole = currentUser?.role.toString().split('.').last.toUpperCase() ?? 'ADMIN';
+  final initial = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
+  
+  return Container(
+    padding: const EdgeInsets.only(top: 25, bottom: 15, left: 20, right: 20),
+    decoration: BoxDecoration(
+      color: primaryColor, // اللون الأساسي: الأسود الداكن
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(30),
+        bottomRight: Radius.circular(30),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.3),
+          spreadRadius: 0,
+          blurRadius: 15,
+          offset: const Offset(0, 8),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            spreadRadius: 0,
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 28),
-            tooltip: 'Gecikme Analizine Dön',
-            onPressed: () => Get.offNamed('/admin/delay_analysis'),
-          ),
-          
-          Row(
-            children: [
-              Icon(Icons.admin_panel_settings_rounded, color: accentColor, size: 30), // الأيقونة بالذهبي
-              const SizedBox(width: 10),
-              // تطبيق الخط الجديد
-              Text(
-                'YÖNETİCİ PANELİ', 
-                style: primaryTextStyle.copyWith(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                ),
+      ],
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.admin_panel_settings_rounded, color: accentColor, size: 30), // الأيقونة بالذهبي
+            const SizedBox(width: 10),
+            // تطبيق الخط الجديد
+            Text(
+              'YÖNETİCİ PANELİ', 
+              style: primaryTextStyle.copyWith(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
               ),
-            ],
-          ),
-          
-          Row(
-            children: [
-              if (isSuperAdmin)
-                IconButton(
-                  icon: Icon(Icons.pending_actions_rounded, color: accentColor, size: 28), // الأيقونة بالذهبي
-                  tooltip: 'Bekleyen İstekler',
-                  onPressed: () => Get.toNamed('/pending_requests'),
-                ),
-              
+            ),
+          ],
+        ),
+        
+        // 🚨 التعديل الثاني: استبدال الأيقونات المنفصلة بالـ PopupMenuButton (Avatar Menu)
+        Row(
+          children: [
+            if (isSuperAdmin)
               IconButton(
-                icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 28),
-                tooltip: 'Çıkış Yap',
-                onPressed: authController.signOut,
+                icon: Icon(Icons.pending_actions_rounded, color: accentColor, size: 28), // الأيقونة بالذهبي
+                tooltip: 'Bekleyen İstekler',
+                onPressed: () => Get.toNamed('/pending_requests'),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            
+            // إضافة قائمة المستخدم المنبثقة (Avatar Menu)
+            PopupMenuButton<String>(
+              color: Colors.white, // خلفية القائمة بيضاء
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              icon: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 30),
+              
+              onSelected: (String result) {
+                if (result == 'logout') {
+                  authController.signOut();
+                } else if (result == 'change_password') {
+                  Get.toNamed('/change_password');
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                
+                // 1. رأس القائمة (معلومات المستخدم)
+                PopupMenuItem<String>(
+                  enabled: false, // لا يمكن الضغط عليه
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          // الافتار (Avatar)
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: accentColor, // خلفية ذهبية
+                            child: Text(
+                              initial, 
+                              style: secondaryTextStyle.copyWith(color: primaryColor, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // اسم المستخدم
+                              Text(
+                                userName, 
+                                style: primaryTextStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 2),
+                              // دور المستخدم
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Text(
+                                  userRole, 
+                                  style: secondaryTextStyle.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor.withOpacity(0.7)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 20),
+                    ],
+                  ),
+                ),
+
+                // 2. خيار تغيير كلمة المرور
+                PopupMenuItem<String>(
+                  value: 'change_password',
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock_reset, color: primaryColor.withOpacity(0.8)),
+                      const SizedBox(width: 10),
+                      Text('Şifre Değiştir', style: secondaryTextStyle),
+                    ],
+                  ),
+                ),
+                
+                // 3. خيار تسجيل الخروج
+                PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.logout_rounded, color: blockedColor), // لون أحمر للـ Logout
+                      const SizedBox(width: 10),
+                      Text('Çıkış Yap', style: secondaryTextStyle.copyWith(color: blockedColor)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
 
   // ----------------------------------------------------
   // --- STATS ROW (عداد المستخدمين) ---
@@ -234,7 +319,7 @@ class AdminDashboardView extends GetView<AdminController> {
               tabs: [
                 // تطبيق الخط الجديد
                 Tab(child: Text('Yöneticiler (${controller.allUsers.where((u) => u.role == UserRole.admin).length})', style: secondaryTextStyle)),
-                Tab(child: Text('Sürücüler (${controller.allUsers.where((u) => u.role == UserRole.user).length})', style: secondaryTextStyle)),
+                Tab(child: Text('Müşteri (${controller.allUsers.where((u) => u.role == UserRole.user).length})', style: secondaryTextStyle)),
               ],
             ),
             Expanded(

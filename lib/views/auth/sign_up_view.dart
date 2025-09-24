@@ -23,12 +23,14 @@ class SignUpView extends GetView<AuthController> {
     bool obscureText = false,
     Widget? suffixIcon,
     bool readOnly = false,
+    void Function(String)? onSubmitted,
   }) {
     
     return TextField(
       controller: controller,
       obscureText: obscureText,
       readOnly: readOnly,
+      onSubmitted: onSubmitted,
       style: const TextStyle(fontWeight: FontWeight.w500), 
       decoration: InputDecoration(
         labelText: label,
@@ -166,6 +168,7 @@ class SignUpView extends GetView<AuthController> {
                       label: 'Şifre Tekrar',
                       icon: Icons.lock_open_outlined,
                       obscureText: !controller.isConfirmPasswordVisible.value,
+                      onSubmitted: (_) => controller.signUp(),
                       suffixIcon: IconButton(
                         icon: Icon(
                           controller.isConfirmPasswordVisible.value ? Icons.visibility : Icons.visibility_off,

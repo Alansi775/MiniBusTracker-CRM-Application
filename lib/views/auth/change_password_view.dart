@@ -31,10 +31,12 @@ class ChangePasswordView extends GetView<AuthController> {
     required IconData icon,
     bool obscureText = false,
     Widget? suffixIcon,
+    void Function(String)? onSubmitted,
   }) {
     return TextField(
       controller: controller,
       obscureText: obscureText,
+      onSubmitted: onSubmitted,
       //  استخدام secondaryTextStyle للنصوص الداخلية
       style: secondaryTextStyle.copyWith(fontWeight: FontWeight.w500), 
       decoration: InputDecoration(
@@ -150,6 +152,7 @@ class ChangePasswordView extends GetView<AuthController> {
                       label: 'Yeni Şifre (Tekrar)',
                       icon: Icons.check_circle_outline,
                       obscureText: !controller.isConfirmPasswordVisible.value,
+                      onSubmitted: (_) => controller.updatePassword(),
                       suffixIcon: IconButton(
                         icon: Icon(
                           controller.isConfirmPasswordVisible.value ? Icons.visibility : Icons.visibility_off,

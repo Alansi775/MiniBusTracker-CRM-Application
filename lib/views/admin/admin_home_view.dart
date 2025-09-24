@@ -161,11 +161,11 @@ class AdminHomeView extends GetView<AdminController> {
           Row(
             children: [
               // زر الانتقال للوحة التحكم الرئيسية
-              IconButton(
-                icon: const Icon(Icons.dashboard_rounded, color: Colors.white, size: 28),
-                tooltip: 'Yönetici Paneli',
-                onPressed: () => Get.offNamed('/admin_dashboard'),
-              ),
+              // IconButton(
+              //   icon: const Icon(Icons.dashboard_rounded, color: Colors.white, size: 28),
+              //   tooltip: 'Yönetici Paneli',
+              //   onPressed: () => Get.offNamed('/admin_dashboard'),
+              // ),
               
               const SizedBox(width: 10),
               
@@ -595,7 +595,7 @@ class AdminHomeView extends GetView<AdminController> {
         return Center(
           child: Padding(
             padding: const EdgeInsets.all(40.0),
-            child: Text('Lütfen Excel dosyalarını yükleyıp تحليل yapın.', style: secondaryTextStyle.copyWith(color: Colors.grey, fontSize: 16)),
+            child: Text('Lütfen Excel dosyalarını yükleyip analiz yapın.', style: secondaryTextStyle.copyWith(color: Colors.grey, fontSize: 16)),
           ),
         );
       }
