@@ -117,7 +117,7 @@ class AdminController extends GetxController {
         .listen((snapshot) {
             Map<String, Map<String, dynamic>> tempLocations = {};
             for (var doc in snapshot.docs) {
-              tempLocations[doc.id] = doc.data() as Map<String, dynamic>;
+              tempLocations[doc.id] = doc.data();
             }
             liveLocations.value = tempLocations;
         });
@@ -158,8 +158,11 @@ class AdminController extends GetxController {
         'mustChangePassword': false, 
       });
       
-      Get.snackbar('Başarılı', '${user.email} onaylandı ve ${assignedRole.name} rolü atandı.', 
-                   snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green);
+      _showModernToast(
+        'Başarılı', 
+        '${user.email} onaylandı ve ${assignedRole.name} rolü atandı.', 
+        isSuccess: true
+      );
 
     } catch (e) {
       Get.snackbar('Hata', 'Onaylama başarısız oldu: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
@@ -170,11 +173,14 @@ class AdminController extends GetxController {
     try {
       await _db.collection('users').doc(user.uid).delete();
       
-      Get.snackbar('Başarılı', '${user.email} isteği reddedildi.', 
-                   snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green);
+      _showModernToast(
+        'Başarılı', 
+        '${user.email} isteği reddedildi.', 
+        isSuccess: true
+      );
 
     } catch (e) {
-      Get.snackbar('Hata', 'Reddetme başarısيز oldu: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
+      Get.snackbar('Hata', 'Reddetme başarısız oldu: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
     }
   }
 
@@ -184,10 +190,20 @@ class AdminController extends GetxController {
       await _db.collection('users').doc(user.uid).update({
         'isBlocked': isBlocked,
       });
-      Get.snackbar('Başarılı', '${user.email} durumu güncellendi.', 
-                   snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green);
+      _showModernToast(
+        'Başarılı',
+        '${user.name} kullanıcısının durumu güncellendi.',
+        isSuccess: true
+      );
+
     } catch (e) {
-      Get.snackbar('Hata', 'Kullanıcı durumu güncellenemedi: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
+     // Get.snackbar('Hata', 'Kullanıcı durumu güncellenemedi: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
+      // New Modern Message appears here
+      _showModernToast(
+        'Hata',
+        'Kullanıcı durumu güncellenemedi: $e',
+        isSuccess: false
+      );
     }
   }
 
@@ -205,13 +221,140 @@ class AdminController extends GetxController {
       // ملاحظة: حذف المستخدم من Firebase Auth يتطلب Server/Admin SDK
       // سنعتمد على أن التطبيق يتجاهل المستخدم المحذوف من Firestore.
       
-      Get.snackbar('Başarılı', '${user.email} sistemden silindi.', 
-                   snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green);
+      // Get.snackbar('Başarılı', '${user.email} sistemden silindi.', 
+      //              snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green);
+      // New Modern message appears here 
+      _showModernToast(
+        'Başarılı',
+        '${user.name} sistemden kalıcı olarak silindi.',
+        isSuccess: true
+      );
+
     } catch (e) {
-      Get.snackbar('Hata', 'Kullanıcı silinemedi: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
+    //  Get.snackbar('Hata', 'Kullanıcı silinemedi: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
+    // New Modern Message appears here
+    _showModernToast(
+      'Hata',
+      'Kullanıcı silinemedi: $e',
+      isSuccess: false
+      );
     }
   }
+
+
+void _showModernToast(String title, String message, {required bool isSuccess}) {
+  // Define Colors and Icons based on success state
+  final Color accentColor = isSuccess ? Colors.green.shade600 : Colors.red.shade600;
+  final IconData icon = isSuccess ? Icons.check_circle_outline : Icons.error_outline;
   
+  // 1. Create the Custom Content Widget (The "Floating Card")
+  final Widget toastContent = Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    child: Material(
+      color: Colors.white.withOpacity(0.95), // Translucent effect
+      borderRadius: BorderRadius.circular(12),
+      elevation: 8,
+      child: Container(
+        padding: const EdgeInsets.all(14), 
+        
+        constraints: const BoxConstraints(
+          maxWidth: 340, // Balanced width
+        ),
+        
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.95),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade100, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Accent Icon
+            Icon(icon, color: accentColor, size: 20),
+            const SizedBox(width: 12),
+            
+            // Text Content
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Title
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  // Message (*** KEY FIX HERE: ALLOWING 2 LINES ***)
+                  Text(
+                    message,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                    maxLines: 2, // <--- CHANGED FROM 1 TO 2
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            
+            // Subtle Close Icon
+            const Padding(
+              padding: EdgeInsets.only(left: 8.0),
+              child: Icon(Icons.close, color: Colors.black26, size: 16),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  // 2. Show the Snackbar
+  Get.snackbar(
+    '', '', 
+    snackPosition: SnackPosition.BOTTOM,
+    duration: const Duration(milliseconds: 1500),
+    isDismissible: true,
+    
+    // Custom Widget Placement and Suppression:
+    titleText: const SizedBox.shrink(),
+    messageText: Center(child: toastContent), 
+    
+    // Aesthetic cleanup:
+    backgroundColor: Colors.transparent, 
+    boxShadows: const [],
+    padding: EdgeInsets.zero,
+    margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+    barBlur: 0,
+    overlayBlur: 0,
+
+    // Animation settings:
+    forwardAnimationCurve: Curves.easeOutCubic,
+    reverseAnimationCurve: Curves.easeInCubic,
+    animationDuration: const Duration(milliseconds: 300), 
+    
+    // Suppress remaining default GetX elements
+    icon: const SizedBox.shrink(),
+    shouldIconPulse: false,
+    mainButton: null,
+  );
+}
+
   // عرض الموقع على الخريطة (URL Launcher)
   void viewUserOnMap(String userId, double? lat, double? lng) async {
     if (lat == null || lng == null) {
@@ -388,7 +531,7 @@ class AdminController extends GetxController {
     int startDelay = _calculateTimeDifference(thisRecordReferenceTime, actualStartTime);
 
     stopDelays.add(StopDelay(
-      stopName: stops[0].name + " (Referans: $thisRecordReferenceTime)",
+      stopName: "${stops[0].name} (Referans: $thisRecordReferenceTime)",
       delayMinutes: startDelay > 0 ? startDelay : 0,
       expectedTime: thisRecordReferenceTime,
       actualTime: actualStartTime,
@@ -527,7 +670,7 @@ class AdminController extends GetxController {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ];
         },
       ),

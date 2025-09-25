@@ -13,6 +13,8 @@ void main() {
 }
 
 class MinibusTrackerApp extends StatelessWidget {
+  const MinibusTrackerApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -76,6 +78,8 @@ class StopDelay {
 }
 
 class MinibusTrackerHome extends StatefulWidget {
+  const MinibusTrackerHome({super.key});
+
   @override
   _MinibusTrackerHomeState createState() => _MinibusTrackerHomeState();
 }
@@ -262,7 +266,7 @@ class _MinibusTrackerHomeState extends State<MinibusTrackerHome> {
     int startDelay = calculateTimeDifference(thisRecordReferenceTime, actualStartTime);
 
     stopDelays.add(StopDelay(
-      stopName: stops[0].name + " (Referans: $thisRecordReferenceTime)",
+      stopName: "${stops[0].name} (Referans: $thisRecordReferenceTime)",
       delayMinutes: startDelay > 0 ? startDelay : 0,
       expectedTime: thisRecordReferenceTime,
       actualTime: actualStartTime,
@@ -371,7 +375,7 @@ class _MinibusTrackerHomeState extends State<MinibusTrackerHome> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ];
         },
       ),
@@ -588,7 +592,7 @@ class _MinibusTrackerHomeState extends State<MinibusTrackerHome> {
                       // Durak listesi
                       Text('Duraklar:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8),
-                      Container(
+                      SizedBox(
                         height: 300, // Sabit yükseklik ver
                         child: ListView.builder(
                           itemCount: stops.length,
@@ -695,7 +699,7 @@ class _MinibusTrackerHomeState extends State<MinibusTrackerHome> {
                                     String refTime = addMinutesToTime(referenceStartTime, index * intervalBetweenBuses);
                                     return Text('${index + 1}. ${record.plateNumber} → $refTime',
                                         style: TextStyle(fontSize: 12, color: Colors.blue[700]));
-                                  }).toList(),
+                                  }),
                                   if (vehicleRecords.length > 10)
                                     Text('...ve ${vehicleRecords.length - 10} kayıt daha',
                                         style: TextStyle(fontSize: 12, color: Colors.blue[600])),
@@ -787,7 +791,7 @@ class _MinibusTrackerHomeState extends State<MinibusTrackerHome> {
 
                           SizedBox(height: 8),
 
-                          Container(
+                          SizedBox(
                             height: 350, // Arama kutusu için biraz daha kısa
                             child: getUniqueVehiclePlates().isEmpty
                                 ? Center(

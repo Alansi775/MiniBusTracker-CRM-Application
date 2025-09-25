@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart'; // استيراد الخطوط
 import '../../controllers/admin_controller.dart';
 import '../../data/models/user_model.dart';
-import '../../widgets/custom_shimmer.dart'; // يمكن استخدامه لاحقاً
+// يمكن استخدامه لاحقاً
 
 class PendingRequestsView extends GetView<AdminController> {
   const PendingRequestsView({super.key});

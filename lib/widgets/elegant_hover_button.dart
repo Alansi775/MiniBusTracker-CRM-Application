@@ -50,7 +50,7 @@ class _ElegantHoverButtonState extends State<ElegantHoverButton> {
     return MouseRegion(
       onEnter: (event) => setState(() => _isHovering = true), 
       onExit: (event) => setState(() => _isHovering = false),  
-      child: Container(
+      child: SizedBox(
         width: widget.width, 
         height: widget.height, 
         child: ElevatedButton(

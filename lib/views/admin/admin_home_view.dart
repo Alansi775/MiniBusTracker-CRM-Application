@@ -1,21 +1,20 @@
-// lib/views/admin/admin_home_view.dart 
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart'; // لاستخدام خط Google Fonts
+import 'package:google_fonts/google_fonts.dart'; 
 import '../../controllers/admin_controller.dart'; 
 import '../../controllers/auth_controller.dart'; 
-import '../../services/auth_service.dart'; 
-import '../../data/models/user_model.dart';
 import '../../widgets/custom_shimmer.dart'; 
 import '../../widgets/elegant_hover_button.dart'; 
+// استيراد ملف الـ Avatar الجديد
+import '../../widgets/avatar_menu_widget.dart'; // <--- NEW IMPORT
 
 class AdminHomeView extends GetView<AdminController> {
   const AdminHomeView({super.key});
 
- // الألوان الموحدة للتصميم الجديد (مطابقة لـ SignIn)
+  // الألوان الموحدة للتصميم الجديد (مطابقة لـ SignIn)
   static const Color primaryColor = Colors.black87; 
-  static const Color secondaryColor = Color(0xFFFFC107); 
+  static const Color secondaryColor = Color(0xFFFFC107); // Used for secondary elements/accents
+  static const Color accentColor = Color(0xFFFFC107); // Alias for secondaryColor, for clarity in header
   static const Color successColor = Color(0xFF28A745); 
   static const Color blockedColor = Color(0xFFDC3545); 
   static const Color lightBackground = Color(0xFFF0F0F0); 
@@ -24,6 +23,7 @@ class AdminHomeView extends GetView<AdminController> {
   // التعديل: استخدام static final لتعريف أنماط الخطوط
   static final TextStyle primaryTextStyle = GoogleFonts.playfairDisplay(color: primaryColor);
   static final TextStyle secondaryTextStyle = const TextStyle(color: Colors.black87);
+  static final TextStyle accentTextStyle = GoogleFonts.playfairDisplay(color: accentColor);
 
 
   // دالة مساعدة لتظليل نص البحث 
@@ -60,204 +60,54 @@ class AdminHomeView extends GetView<AdminController> {
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
     
+    // Determine user role logic here, as it's needed for the header build
+    final currentUser = authController.authService.currentUser.value;
+    final userRole = currentUser?.role.toString().split('.').last.toUpperCase() ?? 'ADMIN'; 
+    final isSuperAdmin = userRole == 'SUPERADMIN';
+    
     return Scaffold(
       backgroundColor: lightBackground, 
       
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildCustomHeader(authController), 
-            
-            Expanded(
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return CustomShimmer(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 5, child: _buildLoadingCard()),
-                          const SizedBox(width: 20),
-                          Expanded(flex: 4, child: _buildLoadingCard()),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: _buildStopManagementCard(context),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        flex: 4, 
-                        child: _buildAnalysisResultCard(),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  // ----------------------------------------------------
-  // --- CUSTOM HEADER (AppBar البديل) المُعدَّل ---
-  // ----------------------------------------------------
-  Widget _buildCustomHeader(AuthController authController) {
-    // جلب معلومات المستخدم الحالي
-    final currentUser = authController.authService.currentUser.value;
-    final userName = currentUser?.name ?? 'Admin';
-    final userRole = currentUser?.role.toString().split('.').last.toUpperCase() ?? 'ADMIN';
-    final initial = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
-    
-    return Container(
-      padding: const EdgeInsets.only(top: 25, bottom: 15, left: 20, right: 20),
-      decoration: BoxDecoration(
-        color: primaryColor, // اللون الأساسي: الأسود الداكن
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            spreadRadius: 0,
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Column(
         children: [
-          Row(
-            children: [
-              Icon(Icons.directions_bus_filled_rounded, color: secondaryColor, size: 30),
-              const SizedBox(width: 10),
-              Text(
-                'MINIBUS ANALİZ', 
-                style: primaryTextStyle.copyWith(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                  shadows: [Shadow(blurRadius: 2, color: Colors.black.withOpacity(0.2))]
-                ),
-              ),
-            ],
-          ),
+          // Using the new elegant header
+          _buildElegantHeader(isSuperAdmin, authController), 
           
-          // قائمة المستخدم الجديدة
-          Row(
-            children: [
-              // زر الانتقال للوحة التحكم الرئيسية
-              // IconButton(
-              //   icon: const Icon(Icons.dashboard_rounded, color: Colors.white, size: 28),
-              //   tooltip: 'Yönetici Paneli',
-              //   onPressed: () => Get.offNamed('/admin_dashboard'),
-              // ),
-              
-              const SizedBox(width: 10),
-              
-              // إضافة قائمة المستخدم المنبثقة (Burger Menu البديل)
-              PopupMenuButton<String>(
-                color: Colors.white, // خلفية القائمة بيضاء
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                icon: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 30),
-                
-                onSelected: (String result) {
-                  if (result == 'logout') {
-                    authController.signOut();
-                  } else if (result == 'change_password') {
-                    Get.toNamed('/change_password');
-                  }
-                },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  
-                  // 1. رأس القائمة (معلومات المستخدم)
-                  PopupMenuItem<String>(
-                    enabled: false, // لا يمكن الضغط عليه
-                    child: Column(
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return CustomShimmer(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            // الافتار (Avatar)
-                            CircleAvatar(
-                              radius: 20,
-                              backgroundColor: secondaryColor, // خلفية ذهبية
-                              child: Text(
-                                initial, 
-                                style: secondaryTextStyle.copyWith(color: primaryColor, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // اسم المستخدم
-                                Text(
-                                  userName, 
-                                  style: primaryTextStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w800),
-                                ),
-                                const SizedBox(height: 2),
-                                // دور المستخدم
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: primaryColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Text(
-                                    userRole, 
-                                    style: secondaryTextStyle.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor.withOpacity(0.7)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 20),
+                        Expanded(flex: 5, child: _buildLoadingCard()),
+                        const SizedBox(width: 20),
+                        Expanded(flex: 4, child: _buildLoadingCard()),
                       ],
                     ),
                   ),
-
-                  // 2. خيار تغيير كلمة المرور
-                  PopupMenuItem<String>(
-                    value: 'change_password',
-                    child: Row(
-                      children: [
-                        Icon(Icons.lock_reset, color: primaryColor.withOpacity(0.8)),
-                        const SizedBox(width: 10),
-                        Text('Şifre Değiştir', style: secondaryTextStyle),
-                      ],
+                );
+              }
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: _buildStopManagementCard(context),
                     ),
-                  ),
-                  
-                  // 3. خيار تسجيل الخروج
-                  PopupMenuItem<String>(
-                    value: 'logout',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.logout_rounded, color: blockedColor), // لون أحمر للـ Logout
-                        const SizedBox(width: 10),
-                        Text('Çıkış Yap', style: secondaryTextStyle.copyWith(color: blockedColor)),
-                      ],
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 4, 
+                      child: _buildAnalysisResultCard(),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              );
+            }),
           ),
         ],
       ),
@@ -265,9 +115,123 @@ class AdminHomeView extends GetView<AdminController> {
   }
 
   // ----------------------------------------------------
-  // --- WIDGET BUILDERS ---
+  // --- ELEGANT HEADER (Compact, Centered, with Avatar) ---
   // ----------------------------------------------------
+  Widget _buildElegantHeader(bool isSuperAdmin, AuthController authController) {
+    final currentUser = authController.authService.currentUser.value;
+    final userName = currentUser?.name ?? 'Admin';
+    final userRole = currentUser?.role.toString().split('.').last.toUpperCase() ?? 'ADMIN'; 
+    
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
+      decoration: const BoxDecoration(
+        color: primaryColor,
+        // Removed bottom radius to make it look like a seamless top bar
+      ),
+      child: Stack(
+        children: [
+          // Menu Button (Top Right) - Now an elegant Avatar
+          Align(
+            alignment: Alignment.topRight,
+            child: _buildAvatarMenu(isSuperAdmin, authController, userName, userRole),
+          ),
+
+          // Logo and Welcome Text Group (CENTERED)
+          Center(
+            // Limiting the max width on large screens to keep the logo area compact
+            child: SizedBox(
+              width: 300, 
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Logo and App Name
+                    _buildElegantLogoContent(),
+
+                    const SizedBox(height: 10),
+
+                    // Personalized Welcome Message
+                    // NOTE: CustomShimmer is likely intended for a loading state, 
+                    // but applied here as per the request, which might be for an animated effect.
+                    CustomShimmer(
+                      child: Text(
+                        'Hoş Geldin, $userName', 
+                        style: accentTextStyle.copyWith(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   
+  // Widget for the Logo Content
+  Widget _buildElegantLogoContent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // الأيقونة الذهبية البارزة 
+        Icon(
+          Icons.directions_bus_filled_rounded,
+          size: 36,
+          color: accentColor,
+        ),
+        const SizedBox(height: 5),
+        // النص بدون 'fontWeight' ليكون ناعماً
+        Text(
+          'MINIBUS ANALİZ', // Keeping the original text as 'MINIBUS ANALİZ'
+          style: GoogleFonts.playfairDisplay(
+              fontSize: 24, 
+              color: accentColor,
+              height: 1,
+          ),
+        ),
+        // تاق أو خط فاصل للتأكيد
+        Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: Container(
+            width: 80, 
+            height: 2, // Reduced height
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Widget to build the Avatar Menu Button
+  Widget _buildAvatarMenu(bool isSuperAdmin, AuthController authController, String userName, String userRole) {
+    return IconButton(
+      icon: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 30),
+      onPressed: () {
+        // Call the external function to show the modern dialog menu
+        showModernUserMenu(
+          Get.context!, // Using Get.context! as the context is generally available in a GetX app
+          isSuperAdmin, 
+          authController, 
+          userName, 
+          userRole,
+        );
+      },
+    );
+  }
+
+  // ----------------------------------------------------
+  // --- WIDGET BUILDERS (Unchanged from previous request) ---
+  // ----------------------------------------------------
+
   Widget _buildLoadingCard() {
     return Card(
       elevation: 8, 
@@ -295,7 +259,7 @@ class AdminHomeView extends GetView<AdminController> {
       ),
     );
   }
-  
+
   Widget _buildStopManagementCard(BuildContext context) {
     return Card(
       elevation: 8, 
@@ -344,7 +308,7 @@ class AdminHomeView extends GetView<AdminController> {
                 decoration: InputDecoration(
                   labelText: 'İlk Kalkış (HH:MM)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  prefixIcon: Icon(Icons.schedule, color: secondaryColor), // الأيقونة باللون الذهبي
+                  prefixIcon: const Icon(Icons.schedule, color: secondaryColor), // الأيقونة باللون الذهبي
                 ),
                 onChanged: (value) => controller.referenceStartTime.value = value,
               ),
@@ -357,7 +321,7 @@ class AdminHomeView extends GetView<AdminController> {
                 decoration: InputDecoration(
                   labelText: 'Minibüs Aralığı (dk)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  prefixIcon: Icon(Icons.timer, color: secondaryColor), // الأيقونة باللون الذهبي
+                  prefixIcon: const Icon(Icons.timer, color: secondaryColor), // الأيقونة باللون الذهبي
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) => controller.intervalBetweenBuses.value = int.tryParse(value) ?? 30,
@@ -367,16 +331,16 @@ class AdminHomeView extends GetView<AdminController> {
         ),
         const SizedBox(height: 10),
         Obx(() => Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.05), // خلفية خفيفة جداً
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '🚌 Başlangıç saati: ${controller.referenceStartTime.value}, Aralık: ${controller.intervalBetweenBuses.value} dk',
-                style: secondaryTextStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor),
-              ),
-            )),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.05), // خلفية خفيفة جداً
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            '🚌 Başlangıç saati: ${controller.referenceStartTime.value}, Aralık: ${controller.intervalBetweenBuses.value} dk',
+            style: secondaryTextStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor),
+          ),
+        )),
       ],
     );
   }
@@ -416,7 +380,6 @@ class AdminHomeView extends GetView<AdminController> {
         // ElegantHoverButton باللون الأخضر
         ElegantHoverButton(
           onPressed: controller.addStop,
-          text: 'Ekle',
           width: 120, 
           height: 50, 
           backgroundColor: successColor, 
@@ -442,27 +405,27 @@ class AdminHomeView extends GetView<AdminController> {
         borderRadius: BorderRadius.circular(15),
       ),
       child: Obx(() => ListView.builder(
-            shrinkWrap: true,
-            itemCount: controller.stops.length,
-            itemBuilder: (context, index) {
-              final stop = controller.stops[index];
-              return ListTile(
-                key: ValueKey(stop.name), 
-                tileColor: index % 2 == 0 ? primaryColor.withOpacity(0.03) : Colors.white, // تظليل خفيف
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                leading: CircleAvatar(
-                  backgroundColor: secondaryColor, // الأرقام باللون الذهبي
-                  child: Text('${index + 1}', style: secondaryTextStyle.copyWith(color: primaryColor, fontWeight: FontWeight.bold)),
-                ),
-                title: Text(stop.name, style: secondaryTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16)),
-                subtitle: Text(index == 0 ? 'Başlangıç Durağı' : 'Önceki Duraktan Süre: ${stop.durationFromPrevious} dk', style: secondaryTextStyle.copyWith(color: Colors.black54)),
-                trailing: IconButton(
-                  icon: const Icon(Icons.close_rounded, color: blockedColor), 
-                  onPressed: () => controller.removeStop(index),
-                ),
-              );
-            },
-          )),
+        shrinkWrap: true,
+        itemCount: controller.stops.length,
+        itemBuilder: (context, index) {
+          final stop = controller.stops[index];
+          return ListTile(
+            key: ValueKey(stop.name), 
+            tileColor: index % 2 == 0 ? primaryColor.withOpacity(0.03) : Colors.white, // تظليل خفيف
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            leading: CircleAvatar(
+              backgroundColor: secondaryColor, // الأرقام باللون الذهبي
+              child: Text('${index + 1}', style: secondaryTextStyle.copyWith(color: primaryColor, fontWeight: FontWeight.bold)),
+            ),
+            title: Text(stop.name, style: secondaryTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16)),
+            subtitle: Text(index == 0 ? 'Başlangıç Durağı' : 'Önceki Duraktan Süre: ${stop.durationFromPrevious} dk', style: secondaryTextStyle.copyWith(color: Colors.black54)),
+            trailing: IconButton(
+              icon: const Icon(Icons.close_rounded, color: blockedColor), 
+              onPressed: () => controller.removeStop(index),
+            ),
+          );
+        },
+      )),
     );
   }
 
@@ -481,7 +444,7 @@ class AdminHomeView extends GetView<AdminController> {
               const Icon(Icons.drive_folder_upload, color: Colors.white),
               const SizedBox(width: 8),
               Text('Gidiş Excel Yükle (${controller.vehicleRecords.length} Kayıt)', 
-                    style: secondaryTextStyle.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                style: secondaryTextStyle.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
             ],
           )),
         ),
@@ -489,56 +452,55 @@ class AdminHomeView extends GetView<AdminController> {
         
         // مربع تحديد Dönüş
         Obx(() => CheckboxListTile(
-              title: Text('Dönüş Seferlerini Dahil Et', style: secondaryTextStyle.copyWith(fontWeight: FontWeight.w600)),
-              value: controller.includeReturn.value,
-              onChanged: (value) => controller.includeReturn.value = value ?? false,
-              controlAffinity: ListTileControlAffinity.leading,
-              activeColor: secondaryColor, // تحديد بالذهبي
-              contentPadding: EdgeInsets.zero,
-            )),
-            
+          title: Text('Dönüş Seferlerini Dahil Et', style: secondaryTextStyle.copyWith(fontWeight: FontWeight.w600)),
+          value: controller.includeReturn.value,
+          onChanged: (value) => controller.includeReturn.value = value ?? false,
+          controlAffinity: ListTileControlAffinity.leading,
+          activeColor: secondaryColor, // تحديد بالذهبي
+          contentPadding: EdgeInsets.zero,
+        )),
+          
         // زر تحميل Dönüş (العودة)
         Obx(() => Visibility(
-              visible: controller.includeReturn.value,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                //  ElegantHoverButton بلون ذهبي أفتح
-                child: ElegantHoverButton(
-                  onPressed: () => controller.uploadExcelFile(true),
-                  width: double.infinity, 
-                  backgroundColor: secondaryColor, //  ذهبي كامل
-                  child: Obx(() => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.upload_file, color: primaryColor), // أيقونة بالأسود الداكن
-                      const SizedBox(width: 8),
-                      Text('Dönüş Excel Yükle (${controller.returnRecords.length} Kayıt)', 
-                            style: secondaryTextStyle.copyWith(color: primaryColor, fontWeight: FontWeight.bold)),
-                    ],
-                  )),
-                ),
-              ),
-            )),
+          visible: controller.includeReturn.value,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10.0),
+            // ElegantHoverButton بلون ذهبي أفتح
+            child: ElegantHoverButton(
+              onPressed: () => controller.uploadExcelFile(true),
+              width: double.infinity, 
+              backgroundColor: secondaryColor, // ذهبي كامل
+              child: Obx(() => Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.upload_file, color: primaryColor), // أيقونة بالأسود الداكن
+                  const SizedBox(width: 8),
+                  Text('Dönüş Excel Yükle (${controller.returnRecords.length} Kayıt)', 
+                    style: secondaryTextStyle.copyWith(color: primaryColor, fontWeight: FontWeight.bold)),
+                ],
+              )),
+            ),
+          ),
+        )),
         const SizedBox(height: 30),
         
         // زر التحليل
         Obx(() => ElegantHoverButton(
-              onPressed: controller.analyzeDelays,
-              text: controller.isAnalyzing.value ? null : 'Gecikme Analizi BAŞLAT',
-              width: double.infinity, 
-              height: 60, 
-              backgroundColor: successColor, // أخضر للبدء
-              child: controller.isAnalyzing.value 
-                  ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 4))
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.rocket_launch, color: Colors.white, size: 28),
-                        const SizedBox(width: 10),
-                        Text('Gecikme Analizi BAŞLAT', style: secondaryTextStyle.copyWith(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                      ],
-                    ),
-            )),
+          onPressed: controller.analyzeDelays,
+          width: double.infinity, 
+          height: 60, 
+          backgroundColor: successColor, // أخضر للبدء
+          child: controller.isAnalyzing.value 
+            ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 4))
+            : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.rocket_launch, color: Colors.white, size: 28),
+                const SizedBox(width: 10),
+                Text('Gecikme Analizi BAŞLAT', style: secondaryTextStyle.copyWith(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+              ],
+            ),
+        )),
       ],
     );
   }
@@ -568,23 +530,23 @@ class AdminHomeView extends GetView<AdminController> {
 
   Widget _buildSearchBox() {
     return Obx(() => TextFormField(
-          controller: controller.searchController,
-          onChanged: controller.onSearchChanged,
-          style: secondaryTextStyle,
-          decoration: InputDecoration(
-            labelText: 'Plaka Ara',
-            hintText: '35BNV175',
-            prefixIcon: Icon(Icons.search, color: secondaryColor), // الأيقونة باللون الذهبي
-            suffixIcon: controller.searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.grey),
-                    onPressed: () => controller.searchController.clear(),
-                  )
-                : null,
-            border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-        ));
+      controller: controller.searchController,
+      onChanged: controller.onSearchChanged,
+      style: secondaryTextStyle,
+      decoration: InputDecoration(
+        labelText: 'Plaka Ara',
+        hintText: '35BNV175',
+        prefixIcon: const Icon(Icons.search, color: secondaryColor), // الأيقونة باللون الذهبي
+        suffixIcon: controller.searchQuery.isNotEmpty
+          ? IconButton(
+            icon: const Icon(Icons.clear, color: Colors.grey),
+            onPressed: () => controller.searchController.clear(),
+          )
+          : null,
+        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+    ));
   }
 
   Widget _buildPlateList() {
@@ -595,7 +557,7 @@ class AdminHomeView extends GetView<AdminController> {
         return Center(
           child: Padding(
             padding: const EdgeInsets.all(40.0),
-            child: Text('Lütfen Excel dosyalarını yükleyip analiz yapın.', style: secondaryTextStyle.copyWith(color: Colors.grey, fontSize: 16)),
+            child: Text('Lütfen Excel dosyalarını yükleyıp analiz yapın.', style: secondaryTextStyle.copyWith(color: Colors.grey, fontSize: 16)),
           ),
         );
       }
@@ -613,10 +575,10 @@ class AdminHomeView extends GetView<AdminController> {
           itemBuilder: (context, index) {
             String plateNumber = filteredPlates[index];
             var vehicleAnalyses = controller.delayAnalyses.where(
-                    (analysis) => analysis.plateNumber == plateNumber).toList();
+              (analysis) => analysis.plateNumber == plateNumber).toList();
 
             int totalDelays = vehicleAnalyses.fold(0,
-                    (sum, analysis) => sum + analysis.totalDelayMinutes);
+              (sum, analysis) => sum + analysis.totalDelayMinutes);
 
             final color = totalDelays == 0 ? successColor : blockedColor;
 
@@ -644,8 +606,8 @@ class AdminHomeView extends GetView<AdminController> {
                 ),
                 subtitle: Text(
                   totalDelays == 0
-                      ? 'Gecikme yok (${vehicleAnalyses.length} Sefer)'
-                      : 'Toplam Gecikme: $totalDelays dk',
+                    ? 'Gecikme yok (${vehicleAnalyses.length} Sefer)'
+                    : 'Toplam Gecikme: $totalDelays dk',
                   style: secondaryTextStyle.copyWith(color: color, fontWeight: FontWeight.w600, fontSize: 14),
                 ),
                 trailing: Container(

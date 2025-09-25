@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
 
         GetPage(
           name: '/admin_dashboard',
-          page: () => const AdminDashboardView(),
+          page: () => AdminDashboardView(),
           transition: Transition.fade,
           transitionDuration: const Duration(milliseconds: 20),
           ),

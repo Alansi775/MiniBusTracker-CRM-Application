@@ -1,5 +1,5 @@
 // lib/views/admin/add_user_view.dart
-
+// we are not using this page now in the app
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/admin_controller.dart';
