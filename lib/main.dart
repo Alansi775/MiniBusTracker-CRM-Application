@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart'; 
 import 'package:google_fonts/google_fonts.dart'; 
 import 'bindings/initial_binding.dart';
+import 'controllers/auth_controller.dart'; // لربط SplashView بالـ AuthController
 import 'views/auth/sign_in_view.dart';
 import 'views/auth/change_password_view.dart';
 import 'views/admin/admin_dashboard_view.dart';
@@ -24,10 +25,27 @@ void main() async {
   runApp(const MyApp());
 }
 
+// 🛑 NEW WIDGET: Splash View for initial redirection
+class SplashView extends GetView<AuthController> {
+  const SplashView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // هذا الويدجت يجبر GetX على بناء AuthController وبدء عملية التحقق والتحويل
+    return const Scaffold(
+      backgroundColor: MyApp.primaryBrandColor,
+      body: Center(
+        child: CircularProgressIndicator(color: MyApp.accentBrandColor),
+      ),
+    );
+  }
+}
+
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // 🚨 تعريف الألوان الموحدة
+  // تعريف الألوان الموحدة
   static const Color primaryBrandColor = Colors.black87; // الأسود الداكن
   static const Color accentBrandColor = Color(0xFFFFC107); // الذهبي
   
@@ -39,24 +57,19 @@ class MyApp extends StatelessWidget {
       initialBinding: InitialBinding(),
       
       theme: ThemeData(
-        // الألوان والخلفية الموحدة
         primarySwatch: Colors.blue, 
         primaryColor: primaryBrandColor,
-        scaffoldBackgroundColor: const Color(0xFFF0F0F0), // خلفية فاتحة موحدة
+        scaffoldBackgroundColor: const Color(0xFFF0F0F0), 
         
         visualDensity: VisualDensity.adaptivePlatformDensity,
         useMaterial3: false, 
 
-        //  1. تطبيق خط Playfair Display كخط افتراضي للنصوص
         fontFamily: GoogleFonts.playfairDisplay().fontFamily,
         
-        //  2. نحدد لون الأيقونات فقط
         iconTheme: const IconThemeData(
           color: primaryBrandColor, 
-          // تم حذف: fontFamily: 'MaterialIcons',
         ),
         
-        //  3. توحيد ثيم الـ AppBar
         appBarTheme: AppBarTheme(
           elevation: 0, 
           centerTitle: true,
@@ -69,7 +82,6 @@ class MyApp extends StatelessWidget {
           iconTheme: const IconThemeData(color: primaryBrandColor),
         ),
         
-        // 4. ضبط لون التمييز والظل
         colorScheme: const ColorScheme.light(
           primary: primaryBrandColor,
           secondary: accentBrandColor,
@@ -77,8 +89,21 @@ class MyApp extends StatelessWidget {
         ),
       ),
       
+      // 🛑 التعديل الرئيسي: استخدام initialRoute بدلاً من home
+      initialRoute: '/splash',
+      
       // Define all routes
       getPages: [
+        // 1. مسار الـ Splash الجديد
+        GetPage(
+          name: '/splash', 
+          page: () => const SplashView(), 
+          binding: BindingsBuilder(() {
+            // ضمان أن AuthController متاح فورًا لبدء التحقق
+            Get.find<AuthController>();
+          }),
+        ),
+        
         GetPage(name: '/login', page: () => const SignInView()),
         GetPage(name: '/signup', page: () => const SignUpView()), 
         GetPage(name: '/change_password', page: () => const ChangePasswordView()), 
@@ -101,9 +126,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/user_home', page: () => const UserHomeView()), 
       ],
       
-      home: const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      // home: const Scaffold( body: Center(child: CircularProgressIndicator()), ),
     );
   }
 }

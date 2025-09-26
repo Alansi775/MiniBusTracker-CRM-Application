@@ -212,17 +212,82 @@ class AdminHomeView extends GetView<AdminController> {
   }
 
   // Widget to build the Avatar Menu Button
-  Widget _buildAvatarMenu(bool isSuperAdmin, AuthController authController, String userName, String userRole) {
-    return IconButton(
-      icon: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 30),
-      onPressed: () {
-        // Call the external function to show the modern dialog menu
-        showModernUserMenu(
-          Get.context!, // Using Get.context! as the context is generally available in a GetX app
-          isSuperAdmin, 
-          authController, 
-          userName, 
-          userRole,
+Widget _buildAvatarMenu(bool isSuperAdmin, AuthController authController, String userName, String userRole) {
+    // 💡 ملاحظة: لا تحتاج لتعريف userRole هنا مرة أخرى، فهي تمرر كمعامل.
+
+    return Builder(
+      builder: (BuildContext context) {
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Tooltip(
+            message: '• Hesap Menüsü', // التركية: قائمة الحساب
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            textStyle: secondaryTextStyle.copyWith( // استخدام secondaryTextStyle
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            waitDuration: const Duration(milliseconds: 500),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(25),
+                hoverColor: accentColor.withOpacity(0.1),
+                splashColor: accentColor.withOpacity(0.2),
+                highlightColor: accentColor.withOpacity(0.1),
+                onTap: () {
+                  // استدعاء الدالة الخارجية showModernUserMenu كما كانت
+                  showModernUserMenu(
+                    Get.context!, 
+                    isSuperAdmin, 
+                    authController, 
+                    userName, 
+                    userRole,
+                  );
+                },
+                child: Container(
+                  width: 48, // حجم أكبر قليلاً
+                  height: 48, 
+                  padding: const EdgeInsets.all(2.0), // مساحة للإطار الذهبي
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: accentColor, width: 2.5), // **الإطار الذهبي البارز**
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withOpacity(0.25),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.person, // أيقونة الشخص المطلوبة
+                      color: primaryColor, // لون الأيقونة: أسود داكن
+                      size: 28, // حجم ملائم
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         );
       },
     );
