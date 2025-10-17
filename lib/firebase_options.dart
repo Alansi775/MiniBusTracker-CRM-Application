@@ -46,6 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '915379460830',
     projectId: 'minibuscrm',
     authDomain: 'minibuscrm.firebaseapp.com',
+    databaseURL: 'https://minibuscrm-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'minibuscrm.firebasestorage.app',
     measurementId: 'G-ES0LCTBWGP',
   );
@@ -55,6 +56,7 @@ class DefaultFirebaseOptions {
     appId: '1:915379460830:android:891d70d5c5874a3ddf004f',
     messagingSenderId: '915379460830',
     projectId: 'minibuscrm',
+    databaseURL: 'https://minibuscrm-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'minibuscrm.firebasestorage.app',
   );
 
@@ -63,6 +65,7 @@ class DefaultFirebaseOptions {
     appId: '1:915379460830:ios:45c7217d7aac1746df004f',
     messagingSenderId: '915379460830',
     projectId: 'minibuscrm',
+    databaseURL: 'https://minibuscrm-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'minibuscrm.firebasestorage.app',
     iosBundleId: 'com.example.minibusTracker',
   );
@@ -72,6 +75,7 @@ class DefaultFirebaseOptions {
     appId: '1:915379460830:ios:45c7217d7aac1746df004f',
     messagingSenderId: '915379460830',
     projectId: 'minibuscrm',
+    databaseURL: 'https://minibuscrm-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'minibuscrm.firebasestorage.app',
     iosBundleId: 'com.example.minibusTracker',
   );
@@ -82,7 +86,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '915379460830',
     projectId: 'minibuscrm',
     authDomain: 'minibuscrm.firebaseapp.com',
+    databaseURL: 'https://minibuscrm-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'minibuscrm.firebasestorage.app',
     measurementId: 'G-TPTYQ1GH1X',
   );
+
 }

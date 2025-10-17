@@ -8,6 +8,7 @@ import '../../widgets/elegant_hover_button.dart';
 // استيراد ملف الـ Avatar الجديد
 import '../../widgets/avatar_menu_widget.dart'; // <--- NEW IMPORT
 
+
 class AdminHomeView extends GetView<AdminController> {
   const AdminHomeView({super.key});
 
@@ -338,7 +339,7 @@ Widget _buildAvatarMenu(bool isSuperAdmin, AuthController authController, String
             Text('Durak ve Zamanlama Yönetimi', style: primaryTextStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w800)),
             const Divider(height: 30, thickness: 2, color: primaryColor),
             
-            _buildTimeSettings(),
+            _buildTimeSettings(context),
             const SizedBox(height: 30),
             
             Text('Yeni Durak Ekle', style: secondaryTextStyle.copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -360,36 +361,46 @@ Widget _buildAvatarMenu(bool isSuperAdmin, AuthController authController, String
     );
   }
 
-  Widget _buildTimeSettings() {
+  Widget _buildTimeSettings(BuildContext context) { 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
+            // 💡 الآن، context مُعرّف وممرر للدالة _selectTime
             Expanded(
-              child: TextFormField( 
-                controller: controller.startTimeController,
-                style: secondaryTextStyle, // تطبيق الخط
-                decoration: InputDecoration(
-                  labelText: 'İlk Kalkış (HH:MM)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  prefixIcon: const Icon(Icons.schedule, color: secondaryColor), // الأيقونة باللون الذهبي
+              child: InkWell(
+                onTap: () => _selectTime(context), // <--- هنا تم استخدام context الذي تم استقباله
+                child: AbsorbPointer( // منع الكتابة المباشرة
+                  child: TextFormField( 
+                    controller: controller.startTimeController,
+                    style: secondaryTextStyle,
+                    decoration: InputDecoration(
+                      labelText: 'İlk Kalkış (HH:MM) - Seç',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      prefixIcon: const Icon(Icons.schedule, color: secondaryColor),
+                    ),
+                    // لا نحتاج لـ onChanged هنا، التحديث يتم في _selectTime
+                  ),
                 ),
-                onChanged: (value) => controller.referenceStartTime.value = value,
               ),
             ),
             const SizedBox(width: 15),
+            
+            // 💡 2. حقل الفاصل الزمني (بقي كنص مع onChanged)
             Expanded(
               child: TextFormField(
                 controller: controller.intervalController,
-                style: secondaryTextStyle, // تطبيق الخط
+                style: secondaryTextStyle, 
                 decoration: InputDecoration(
-                  labelText: 'Minibüs Aralığı (dk)',
+                  labelText: 'Minibüs Aralığı (dk)', // إعادة التسمية
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  prefixIcon: const Icon(Icons.timer, color: secondaryColor), // الأيقونة باللون الذهبي
+                  prefixIcon: const Icon(Icons.timer, color: secondaryColor), 
                 ),
                 keyboardType: TextInputType.number,
-                onChanged: (value) => controller.intervalBetweenBuses.value = int.tryParse(value) ?? 30,
+                
+                // 🚨 التعديل: استخدام الدالة الجديدة التي تطبق Debounce
+                onChanged: (value) => controller.updateInterval(value), 
               ),
             ),
           ],
@@ -398,7 +409,7 @@ Widget _buildAvatarMenu(bool isSuperAdmin, AuthController authController, String
         Obx(() => Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.05), // خلفية خفيفة جداً
+            color: primaryColor.withOpacity(0.05),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -408,7 +419,7 @@ Widget _buildAvatarMenu(bool isSuperAdmin, AuthController authController, String
         )),
       ],
     );
-  }
+}
 
   Widget _buildAddStopSection() {
     return Row(
@@ -613,6 +624,146 @@ Widget _buildAvatarMenu(bool isSuperAdmin, AuthController authController, String
       ),
     ));
   }
+
+  // دالة جديدة لاختيار الوقت (Time Picker)
+Future<void> _selectTime(BuildContext context) async {
+    // حاول تحليل الوقت الحالي من المتحكم لتعيينه كقيمة أولية
+    final String timeString = controller.startTimeController.text;
+    TimeOfDay initialTime;
+    try {
+      final parts = timeString.split(':');
+      initialTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    } catch (_) {
+      // قيمة افتراضية في حالة الخطأ أو عدم وجود تنسيق
+      initialTime = TimeOfDay.now(); 
+    }
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: primaryColor, // لون الرأس
+              onPrimary: Colors.white,
+              surface: lightBackground, // لون الخلفية
+              onSurface: primaryColor,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      // تحويل TimeOfDay إلى تنسيق HH:MM المطلوب
+      final newTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      
+      // 1. تحديث المتحكم النصي (View)
+      controller.startTimeController.text = newTime;
+      
+      // 2. تحديث المتغير المراقب (Controller) وحفظه في Firebase
+      controller.referenceStartTime.value = newTime;
+
+      controller.saveSettings();
+      
+      // لا نحتاج لاستدعاء _saveSettings() يدوياً، لأن ever(referenceStartTime, ...) سيتولى الأمر.
+    }
+}
+
+// دالة جديدة لاختيار المدة الزمنية (بالدقائق) باستخدام نافذة منبثقة
+Future<void> _selectDuration(BuildContext context) async {
+    // القيمة الحالية للمتحكم
+    int initialValue = int.tryParse(controller.intervalController.text) ?? 30;
+
+    // فتح نافذة منبثقة لاختيار القيمة
+    final int? picked = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext sheetContext) {
+        // نستخدم StateSetter داخل النافذة المنبثقة لإدارة حالة القيمة المحددة مؤقتاً
+        int selectedValue = initialValue;
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Container(
+              padding: const EdgeInsets.all(25),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Minibüs Aralığını Seçin (dk)',
+                    style: primaryTextStyle.copyWith(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 20),
+
+                  // منتقي القيمة (باستخدام Row وأزرار لسهولة الاستخدام)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle, color: primaryColor, size: 30),
+                        onPressed: () {
+                          if (selectedValue > 1) {
+                            setState(() {
+                              selectedValue--;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 20),
+                      Text(
+                        '$selectedValue',
+                        style: secondaryTextStyle.copyWith(fontSize: 48, fontWeight: FontWeight.w900, color: secondaryColor),
+                      ),
+                      const SizedBox(width: 20),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: primaryColor, size: 30),
+                        onPressed: () {
+                          setState(() {
+                            selectedValue++;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  
+                  // زر التأكيد
+                  ElegantHoverButton(
+                    onPressed: () => Navigator.of(context).pop(selectedValue),
+                    width: double.infinity,
+                    backgroundColor: successColor,
+                    child: Text('Onayla', style: secondaryTextStyle.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    // معالجة القيمة المختارة بعد إغلاق النافذة المنبثقة
+    if (picked != null) {
+      final newValue = picked.toString();
+      
+      // 1. تحديث المتحكم النصي (View)
+      controller.intervalController.text = newValue;
+      
+      // 2. تحديث المتغير المراقب (Controller) وحفظه في Firebase
+      controller.intervalBetweenBuses.value = picked;
+
+      controller.saveSettings();
+    }
+}
 
   Widget _buildPlateList() {
     return Obx(() {

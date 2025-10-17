@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "915379460830",
+    "firebase_url": "https://minibuscrm-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "minibuscrm",
     "storage_bucket": "minibuscrm.firebasestorage.app"
   },

@@ -1,1 +1,55 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"minibuscrm","appId":"1:915379460830:android:891d70d5c5874a3ddf004f","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"minibuscrm","appId":"1:915379460830:ios:45c7217d7aac1746df004f","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"minibuscrm","appId":"1:915379460830:ios:45c7217d7aac1746df004f","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"minibuscrm","configurations":{"android":"1:915379460830:android:891d70d5c5874a3ddf004f","ios":"1:915379460830:ios:45c7217d7aac1746df004f","macos":"1:915379460830:ios:45c7217d7aac1746df004f","web":"1:915379460830:web:8e45b1e95c298d11df004f","windows":"1:915379460830:web:25a9335d53413529df004f"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "minibuscrm",
+          "appId": "1:915379460830:android:891d70d5c5874a3ddf004f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "minibuscrm",
+          "appId": "1:915379460830:ios:45c7217d7aac1746df004f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "minibuscrm",
+          "appId": "1:915379460830:ios:45c7217d7aac1746df004f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "minibuscrm",
+          "configurations": {
+            "android": "1:915379460830:android:891d70d5c5874a3ddf004f",
+            "ios": "1:915379460830:ios:45c7217d7aac1746df004f",
+            "macos": "1:915379460830:ios:45c7217d7aac1746df004f",
+            "web": "1:915379460830:web:8e45b1e95c298d11df004f",
+            "windows": "1:915379460830:web:25a9335d53413529df004f"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

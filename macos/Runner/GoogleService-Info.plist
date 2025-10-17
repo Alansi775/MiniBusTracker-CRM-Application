@@ -26,5 +26,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:915379460830:ios:45c7217d7aac1746df004f</string>
+	<key>DATABASE_URL</key>
+	<string>https://minibuscrm-default-rtdb.europe-west1.firebasedatabase.app</string>
 </dict>
 </plist>

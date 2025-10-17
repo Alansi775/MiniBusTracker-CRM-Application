@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,24 +9,42 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart'; 
+import 'package:intl/intl.dart'; 
+import 'package:firebase_core/firebase_core.dart';
+
 
 //  تأكد من وجود هذين الملفين في مساراتهما
 import '../data/models/user_model.dart'; 
 import '../services/auth_service.dart';
 
 // -------------------------------------------------------------------
-// --- DATA MODELS (لتحليل التأخيرات - تم وضعها هنا مؤقتاً لتجنب أخطاء imports) ---
+// --- DATA MODELS (لتحليل التأخيرات) ---
 // -------------------------------------------------------------------
 
 class Stop {
   String name;
   int durationFromPrevious; 
   Stop({required this.name, required this.durationFromPrevious});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'durationFromPrevious': durationFromPrevious,
+    };
+  }
+
+  factory Stop.fromMap(Map<String, dynamic> map) {
+    return Stop(
+      name: map['name']?.toString() ?? '',
+      durationFromPrevious: (map['durationFromPrevious'] as num?)?.toInt() ?? 0,
+    );
+  }
 }
+// VehicleRecord (الهيكل الأفقي الذي تتوقعه دالة التحليل)
 class VehicleRecord {
   String plateNumber;
   String date;
-  List<String> arrivalTimes;
+  List<String> arrivalTimes; // أوقات الوصول بالترتيب (HH:MM)
   VehicleRecord({required this.plateNumber, required this.date, required this.arrivalTimes});
 }
 class StopDelay {
@@ -45,13 +64,38 @@ class DelayAnalysis {
 }
 
 // -------------------------------------------------------------------
-// --- ADMIN CONTROLLER (الدمج النهائي) ---
+// --- INTERNAL MODEL FOR NEW EXCEL FORMAT (موديل داخلي للقراءة) ---
 // -------------------------------------------------------------------
+
+// موديل يمثل حدث وصول واحد للمركبة (من الملف العمودي الجديد)
+class _StopEvent {
+  final String plate;
+  final String stopName;
+  final DateTime arrivalTime; // تم التأكد من أنه ليس nullable
+  _StopEvent({required this.plate, required this.stopName, required this.arrivalTime});
+}
+
+// -------------------------------------------------------------------
+// --- ADMIN CONTROLLER (الدمج النهائي والمصحح) ---
+// -------------------------------------------------------------------
+const String RTDB_URL = 'https://minibuscrm-default-rtdb.europe-west1.firebasedatabase.app/';
 
 class AdminController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseDatabase _rtdb = FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
+    databaseURL: RTDB_URL,
+  );
+
+
+
   final AuthService _authService = Get.find<AuthService>();
-  
+
+
+  StreamSubscription<DatabaseEvent>? _rtdbSubscription;
+  String get _currentUserId => _authService.currentUser.value?.uid ?? '';
+  DatabaseReference get _settingsRef => _rtdb.ref().child('user_settings').child(_currentUserId);  
+  Timer? _debounceTimer; 
   // ===============================================
   // === خصائص إدارة المستخدمين ===
   // ===============================================
@@ -70,7 +114,7 @@ class AdminController extends GetxController {
   final includeReturn = false.obs;
   final delayAnalyses = <DelayAnalysis>[].obs;
   final searchQuery = "".obs;
-  final isLoading = false.obs;
+  final isLoading = false.obs; // ✅ تم إضافة حالة التحميل
   final isAnalyzing = false.obs;
 
   final referenceStartTime = "06:30".obs;
@@ -89,16 +133,180 @@ class AdminController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // بدأ الاستماع لطلبات التسجيل المعلقة 
+    
+    // 1. بدأ الاستماع لطلبات التسجيل المعلقة 
     _fetchPendingRequests();
-    // بدأ الاستماع لجميع المستخدمين وحالتهم الآنية
+    
+    // 2. بدأ الاستماع لجميع المستخدمين وحالتهم الآنية
     _startUserAndLocationListeners();
-    // ربط المتحكمات النصية بالمتغيرات القابلة للملاحظة
-    ever(referenceStartTime, (value) => startTimeController.text = value);
-    ever(intervalBetweenBuses, (value) => intervalController.text = value.toString());
+
+    // 3. ربط بدء الاستماع RTDB بحالة المستخدم (التصحيح الأساسي هنا)
+    ever(_authService.currentUser, (user) {
+      if (user != null) {
+        // ✅ 1. اضبط حالة التحميل على 'true' عند تسجيل الدخول أو التحديث
+        isLoading.value = true;
+        _startRtdbListener();
+      } else {
+        _rtdbSubscription?.cancel();
+        stops.clear(); 
+        isLoading.value = false; // إعادة ضبط عند تسجيل الخروج
+      }
+    });
+
+    // 4. التشغيل الفوري إذا كان المستخدم مسجلاً بالفعل عند بدء التشغيل
+    if (_authService.currentUser.value != null) {
+        // ✅ 2. اضبط حالة التحميل على 'true' في onInit
+        isLoading.value = true;
+        _startRtdbListener();
+    }
+    
+    // 5. تفعيل الحفظ التلقائي للمحطات بعد إضافة أو حذف محطة
+    debounce(stops, (_) => _saveStops(), time: const Duration(milliseconds: 500));
+    
+    // 6. تفعيل الحفظ التلقائي للإعدادات عند تغيير المتغيرات الملاحظة
+    //ever(referenceStartTime, (_) => _saveSettings());
+    //ever(intervalBetweenBuses, (_) => _saveSettings());
   }
 
-  // دالة لبدء الاستماع لكل المستخدمين والمواقع
+  void updateInterval(String value) {
+        final int newInterval = int.tryParse(value) ?? 30;
+        
+        // 1. تحديث القيمة في المتغير المراقب على الفور
+        intervalBetweenBuses.value = newInterval;
+
+        // 2. إلغاء المؤقت الحالي إذا كان موجوداً (حتى لا يتم الحفظ الآن)
+        if (_debounceTimer?.isActive ?? false) {
+            _debounceTimer!.cancel();
+        }
+
+        // 3. بدء مؤقت جديد: الحفظ يتم فقط بعد التوقف عن الكتابة بـ 500ms
+        _debounceTimer = Timer(const Duration(milliseconds: 2000), () {
+            // استدعاء دالة الحفظ العامة (saveSettings)
+            saveSettings(); 
+        });
+    }
+
+  // ----------------------------------------------------
+  // --- REALTIME DB PERSISTENCE LOGIC (منطق الحفظ والتحميل) ---
+  // ----------------------------------------------------
+
+
+  // ✅ 1. بدء الاستماع لتحميل البيانات في الوقت الفعلي (التصحيح هنا)
+  void _startRtdbListener() {
+    if (_currentUserId.isEmpty) return;
+
+    // ✅ تأكد من أن حالة التحميل 'true' قبل بدء الاستماع
+    if (!isLoading.value) {
+        isLoading.value = true;
+    }
+
+    _rtdbSubscription?.cancel();
+    
+    _rtdbSubscription = _settingsRef.onValue.listen((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) {
+        stops.clear();
+        // مسح المتحكمات النصية في حالة عدم وجود بيانات
+        startTimeController.text = "06:30";
+        intervalController.text = "30";
+      } else {
+        // 1. تحميل الإعدادات (وقت البدء والفاصل)
+        final settings = data['settings'] as Map<dynamic, dynamic>?;
+        if (settings != null) {
+          if (settings.containsKey('referenceStartTime')) {
+            referenceStartTime.value = settings['referenceStartTime']?.toString() ?? "06:30";
+          }
+          if (settings.containsKey('intervalBetweenBuses')) {
+            intervalBetweenBuses.value = (settings['intervalBetweenBuses'] as num?)?.toInt() ?? 30;
+          }
+        }
+        // ✅ تحديث المتحكمات النصية بعد التحميل
+        startTimeController.text = referenceStartTime.value;
+        intervalController.text = intervalBetweenBuses.value.toString();
+
+
+        // 2. تحميل قائمة المحطات (التصحيح الأساسي هنا لمعالجة الخرائط والقوائم)
+        final stopsListRaw = data['stops'];
+        List<Stop> loadedStops = [];
+
+        if (stopsListRaw is List) {
+            // حالة RTDB أعادت قائمة صحيحة 
+            loadedStops = stopsListRaw
+                .where((item) => item != null)
+                .map((map) => Stop.fromMap(Map<String, dynamic>.from(map)))
+                .toList();
+        } else if (stopsListRaw is Map) {
+            // حالة RTDB أعادت خريطة بمفاتيح رقمية (السيناريو المتوقع في الويب)
+            
+            // تحويل المفاتيح إلى أرقام، فرزها، ثم قراءة القيمة بترتيب صحيح
+            List<int> sortedKeys = stopsListRaw.keys
+                .map((k) => int.tryParse(k.toString()) ?? -1)
+                .where((k) => k != -1) // استبعاد المفاتيح غير الصالحة
+                .toList()..sort();
+            
+            loadedStops = sortedKeys
+                .map((k) => Stop.fromMap(Map<String, dynamic>.from(stopsListRaw[k.toString()] as Map<dynamic, dynamic>)))
+                .toList();
+        }
+
+        if (loadedStops.isNotEmpty) {
+          stops.value = loadedStops;
+        } else {
+           stops.clear();
+        }
+      }
+
+      // ✅ 3. نهاية حالة التحميل بعد معالجة البيانات بنجاح
+      isLoading.value = false;
+
+    }, onError: (error) {
+      // ✅ 4. نهاية حالة التحميل في حالة الخطأ
+      isLoading.value = false; 
+      Get.snackbar('Hata', 'RTDB verileri yüklenemedi: $error', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
+    });
+  }
+
+  // ✅ 2. دالة لحفظ قائمة المحطات في RTDB
+  Future<void> _saveStops() async {
+    if (_currentUserId.isEmpty) return;
+    
+    final stopsData = stops.map((s) => s.toMap()).toList();
+    
+    try {
+      // تحديث فقط عقدة 'stops' تحت المستخدم
+      await _settingsRef.update({
+        'stops': stopsData,
+      });
+    } catch (e) {
+      _showModernToast('Hata', 'Duraklar kaydedilemedi: $e', isSuccess: false);
+    }
+  }
+
+  // ✅ 3. دالة لحفظ الإعدادات الزمنية (وقت البدء والفاصل) في RTDB
+  Future<void> saveSettings() async { // 👈 تم تغيير الاسم
+  if (_currentUserId.isEmpty) return;
+
+  try {
+    // بناء الخريطة المراد حفظها
+    final settingsMap = {
+      'referenceStartTime': referenceStartTime.value,
+      'intervalBetweenBuses': intervalBetweenBuses.value,
+    };
+    
+    // الحفظ في Firebase
+    await _settingsRef.update({
+      'settings': settingsMap,
+    });
+    
+    // ملاحظة: لا نحتاج لـ Get.snackbar هنا إلا في حالة الخطأ
+    
+  } catch (e) {
+    Get.snackbar('Hata', 'Ayarlar kaydedilemedi: $e', 
+      snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
+  }
+}
+  
+  // دالة لبدء الاستماع لكل المستخدمين والمواقع (تم نقلها داخل الفئة)
   void _startUserAndLocationListeners() {
      // 1. الاستماع لجميع المستخدمين (Admin, User)
     _db.collection('users')
@@ -140,8 +348,6 @@ class AdminController extends GetxController {
             isFetchingRequests.value = false;
         }, onError: (error) {
             isFetchingRequests.value = false;
-            // يتم إظهار الخطأ في واجهة المستخدم (PendingRequestsView)
-            // Get.snackbar('Hata', 'Bekleyen istekler getirilirken hata oluştu.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
         });
   }
 
@@ -197,8 +403,6 @@ class AdminController extends GetxController {
       );
 
     } catch (e) {
-     // Get.snackbar('Hata', 'Kullanıcı durumu güncellenemedi: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
-      // New Modern Message appears here
       _showModernToast(
         'Hata',
         'Kullanıcı durumu güncellenemedi: $e',
@@ -218,12 +422,6 @@ class AdminController extends GetxController {
       // 2. حذف المستخدم من Firestore
       await _db.collection('users').doc(user.uid).delete();
       
-      // ملاحظة: حذف المستخدم من Firebase Auth يتطلب Server/Admin SDK
-      // سنعتمد على أن التطبيق يتجاهل المستخدم المحذوف من Firestore.
-      
-      // Get.snackbar('Başarılı', '${user.email} sistemden silindi.', 
-      //              snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green);
-      // New Modern message appears here 
       _showModernToast(
         'Başarılı',
         '${user.name} sistemden kalıcı olarak silindi.',
@@ -231,8 +429,6 @@ class AdminController extends GetxController {
       );
 
     } catch (e) {
-    //  Get.snackbar('Hata', 'Kullanıcı silinemedi: $e', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
-    // New Modern Message appears here
     _showModernToast(
       'Hata',
       'Kullanıcı silinemedi: $e',
@@ -242,120 +438,107 @@ class AdminController extends GetxController {
   }
 
 
-void _showModernToast(String title, String message, {required bool isSuccess}) {
-  // Define Colors and Icons based on success state
-  final Color accentColor = isSuccess ? Colors.green.shade600 : Colors.red.shade600;
-  final IconData icon = isSuccess ? Icons.check_circle_outline : Icons.error_outline;
-  
-  // 1. Create the Custom Content Widget (The "Floating Card")
-  final Widget toastContent = Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-    child: Material(
-      color: Colors.white.withOpacity(0.95), // Translucent effect
-      borderRadius: BorderRadius.circular(12),
-      elevation: 8,
-      child: Container(
-        padding: const EdgeInsets.all(14), 
-        
-        constraints: const BoxConstraints(
-          maxWidth: 340, // Balanced width
-        ),
-        
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.95),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade100, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Accent Icon
-            Icon(icon, color: accentColor, size: 20),
-            const SizedBox(width: 12),
-            
-            // Text Content
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  // Message (*** KEY FIX HERE: ALLOWING 2 LINES ***)
-                  Text(
-                    message,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13,
-                    ),
-                    maxLines: 2, // <--- CHANGED FROM 1 TO 2
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+  void _showModernToast(String title, String message, {required bool isSuccess}) {
+    final Color accentColor = isSuccess ? Colors.green.shade600 : Colors.red.shade600;
+    final IconData icon = isSuccess ? Icons.check_circle_outline : Icons.error_outline;
+    
+    final Widget toastContent = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Material(
+        color: Colors.white.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(12),
+        elevation: 8,
+        child: Container(
+          padding: const EdgeInsets.all(14), 
+          
+          constraints: const BoxConstraints(
+            maxWidth: 340,
+          ),
+          
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade100, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
               ),
-            ),
-            
-            // Subtle Close Icon
-            const Padding(
-              padding: EdgeInsets.only(left: 8.0),
-              child: Icon(Icons.close, color: Colors.black26, size: 16),
-            ),
-          ],
+            ],
+          ),
+          
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(icon, color: accentColor, size: 20),
+              const SizedBox(width: 12),
+              
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      message,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                      ),
+                      maxLines: 2, 
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              
+              const Padding(
+                padding: EdgeInsets.only(left: 8.0),
+                child: Icon(Icons.close, color: Colors.black26, size: 16),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
 
-  // 2. Show the Snackbar
-  Get.snackbar(
-    '', '', 
-    snackPosition: SnackPosition.BOTTOM,
-    duration: const Duration(milliseconds: 1500),
-    isDismissible: true,
-    
-    // Custom Widget Placement and Suppression:
-    titleText: const SizedBox.shrink(),
-    messageText: Center(child: toastContent), 
-    
-    // Aesthetic cleanup:
-    backgroundColor: Colors.transparent, 
-    boxShadows: const [],
-    padding: EdgeInsets.zero,
-    margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
-    barBlur: 0,
-    overlayBlur: 0,
+    Get.snackbar(
+      '', '', 
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(milliseconds: 1500),
+      isDismissible: true,
+      
+      titleText: const SizedBox.shrink(),
+      messageText: Center(child: toastContent), 
+      
+      backgroundColor: Colors.transparent, 
+      boxShadows: const [],
+      padding: EdgeInsets.zero,
+      margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+      barBlur: 0,
+      overlayBlur: 0,
 
-    // Animation settings:
-    forwardAnimationCurve: Curves.easeOutCubic,
-    reverseAnimationCurve: Curves.easeInCubic,
-    animationDuration: const Duration(milliseconds: 300), 
-    
-    // Suppress remaining default GetX elements
-    icon: const SizedBox.shrink(),
-    shouldIconPulse: false,
-    mainButton: null,
-  );
-}
+      forwardAnimationCurve: Curves.easeOutCubic,
+      reverseAnimationCurve: Curves.easeInCubic,
+      animationDuration: const Duration(milliseconds: 300), 
+      
+      icon: const SizedBox.shrink(),
+      shouldIconPulse: false,
+      mainButton: null,
+    );
+  }
 
-  // عرض الموقع على الخريطة (URL Launcher)
   void viewUserOnMap(String userId, double? lat, double? lng) async {
     if (lat == null || lng == null) {
       Get.snackbar('Hata', 'Kullanıcının canlı konumu mevcut değil.', 
@@ -363,8 +546,7 @@ void _showModernToast(String title, String message, {required bool isSuccess}) {
       return;
     }
     
-    // استخدام Google Maps URL لفتح الموقع
-    final url = 'http://maps.google.com/?q=$lat,$lng';
+    final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng'; 
     
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
@@ -388,6 +570,7 @@ void _showModernToast(String title, String message, {required bool isSuccess}) {
       ));
       stopNameController.clear();
       durationController.clear();
+      _showModernToast('Başarılı', 'Yeni durak eklendi.', isSuccess: true);
     }
   }
 
@@ -396,7 +579,7 @@ void _showModernToast(String title, String message, {required bool isSuccess}) {
   }
 
   // ----------------------------------------------------
-  // --- FILE UPLOAD (تحميل ملف Excel) ---
+  // --- FILE UPLOAD (تحميل ملف Excel) - NEW LOGIC ---
   // ----------------------------------------------------
   
   Future<void> uploadExcelFile(bool isReturnFile) async {
@@ -406,47 +589,126 @@ void _showModernToast(String title, String message, {required bool isSuccess}) {
       allowedExtensions: ['xlsx', 'xls', 'csv'],
     );
 
-    if (result != null && result.files.single.bytes != null) {
-      try {
-        var bytes = result.files.single.bytes!;
-        var excel = Excel.decodeBytes(bytes);
-        List<VehicleRecord> records = [];
+    if (result == null || result.files.single.bytes == null) {
+      isLoading.value = false;
+      return;
+    }
 
-        for (var table in excel.tables.keys) {
-          var sheet = excel.tables[table]!;
-          for (int row = 1; row < sheet.maxRows; row++) {
-            var cells = sheet.rows[row];
-            if (cells.isNotEmpty && cells.length >= 3) {
-              String plateNumber = cells[0]?.value?.toString() ?? '';
-              String date = cells[1]?.value?.toString() ?? '';
-              List<String> arrivalTimes = [];
-              for (int col = 2; col < cells.length; col++) {
-                if (cells[col]?.value != null) {
-                  arrivalTimes.add(cells[col]!.value.toString());
-                }
-              }
-              if (plateNumber.isNotEmpty && arrivalTimes.isNotEmpty) {
-                records.add(VehicleRecord(
-                  plateNumber: plateNumber,
-                  date: date,
-                  arrivalTimes: arrivalTimes,
-                ));
-              }
-            }
-          }
-        }
-        if (isReturnFile) {
-          returnRecords.value = records;
-        } else {
-          vehicleRecords.value = records;
-        }
-        Get.snackbar('Başarılı', 'Excel dosyası başarıyla yüklendi (${records.length} kayıt).', 
-            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green);
+    try {
+      var bytes = result.files.single.bytes!;
+      var excel = Excel.decodeBytes(bytes);
+      
+      // Map لتجميع الأحداث في رحلات (المفتاح: "Plate_Date")
+      Map<String, List<_StopEvent>> groupedTrips = {};
 
-      } catch (e) {
-        Get.snackbar('Hata', 'Dosya okuma hatası: $e', 
-            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
+      // 1. إيجاد الورقة الصحيحة وقراءة العناوين
+      var tableKey = excel.tables.keys.first;
+      var sheet = excel.tables[tableKey]!;
+      
+      if (sheet.maxRows < 2) {
+          throw Exception('Excel dosyası veri satırı içermiyor.');
       }
+
+      // قراءة العناوين من الصف 0
+      final List<String> headers = sheet.rows[0].map((cell) => cell?.value?.toString().trim() ?? '').toList();
+
+      // تحديد مؤشرات الأعمدة للهيكل العمودي الجديد
+      final int vehicleIndex = headers.indexOf('Araç');
+      final int stopIndex = headers.indexOf('Bölge');
+      final int dateIndex = headers.indexOf('Başlangıç tarihi'); 
+      final int timeIndex = headers.indexOf('Başlangıç saati');
+
+      // 2. التحقق من صحة العناوين
+      if (vehicleIndex == -1 || stopIndex == -1 || dateIndex == -1 || timeIndex == -1) {
+          throw Exception('Excel sütunları hatalı. Gerekli sütunlar: "Araç", "Bölge", "Başlangıç tarihi", "Başlangıç saati".');
+      }
+
+      // تنسيق التاريخ والوقت للدمج
+      final DateFormat inputFormat = DateFormat('dd.MM.yyyy HH:mm:ss'); 
+
+      // 3. المرور على الصفوف وتحويل/تجميع الأحداث
+      for (int row = 1; row < sheet.maxRows; row++) {
+        var cells = sheet.rows[row];
+        if (cells.length < headers.length) continue; 
+
+        // استخلاص البيانات الخام
+        String plate = cells[vehicleIndex]?.value?.toString().trim().replaceAll(' ', '') ?? '';
+        String stopName = cells[stopIndex]?.value?.toString().trim() ?? '';
+        String datePart = cells[dateIndex]?.value?.toString().trim() ?? '';
+        String timePart = cells[timeIndex]?.value?.toString().trim() ?? '';
+
+        if (plate.isEmpty || stopName.isEmpty || datePart.isEmpty || timePart.isEmpty) continue;
+
+        // دمج التاريخ والوقت إلى DateTime
+        DateTime? arrivalTime;
+        try {
+            String combinedDateTime = '$datePart $timePart';
+            // إضافة الثواني لضمان التنسيق (إذا كانت مفقودة)
+            if (timePart.split(':').length == 2) {
+                combinedDateTime += ':00'; 
+            }
+            // قراءة التاريخ
+            arrivalTime = inputFormat.parse(combinedDateTime);
+        } catch (e) {
+            // تجاهل السجلات غير القابلة للقراءة
+            continue; 
+        }
+        
+        final event = _StopEvent(
+            plate: plate, 
+            stopName: stopName, 
+            arrivalTime: arrivalTime!, 
+        );
+
+        // التجميع بناءً على اللوحة والتاريخ لتمثيل "رحلة" واحدة في يوم معين
+        String key = '${plate}_$datePart';
+        if (!groupedTrips.containsKey(key)) {
+            groupedTrips[key] = [];
+        }
+        groupedTrips[key]!.add(event);
+      }
+      
+      // 4. تحويل الأحداث المجمعة إلى هيكل VehicleRecord (Wide Format)
+      List<VehicleRecord> finalRecords = [];
+      
+      // المرور على الرحلات المجمعة
+      groupedTrips.forEach((key, events) {
+          // ترتيب الأحداث حسب وقت الوصول لضمان الترتيب الصحيح للمحطات في الرحلة
+          events.sort((a, b) => a.arrivalTime.compareTo(b.arrivalTime));
+          
+          String date = DateFormat('dd.MM.yyyy').format(events.first.arrivalTime);
+          
+          // إنشاء قائمة بأوقات الوصول (HH:MM) التي تتوقعها دالة التحليل القديمة
+          List<String> arrivalTimes = events.map((e) => DateFormat('HH:mm').format(e.arrivalTime)).toList();
+          
+          finalRecords.add(VehicleRecord(
+              plateNumber: events.first.plate,
+              date: date,
+              arrivalTimes: arrivalTimes,
+          ));
+      });
+      
+      // ترتيب الرحلات حسب وقت بدء أول وصول للحفاظ على منطق الـ rowIndex في دالة التحليل
+      finalRecords.sort((a, b) {
+          // قارن بين أول وقت وصول في كل رحلة
+          String timeA = a.arrivalTimes.first;
+          String timeB = b.arrivalTimes.first;
+          return timeA.compareTo(timeB);
+      });
+      
+      // 5. تحديث متغيرات الكنترولر
+      if (isReturnFile) {
+        returnRecords.value = finalRecords;
+      } else {
+        vehicleRecords.value = finalRecords;
+      }
+
+      Get.snackbar('Başarılı', 'Excel dosyası başarıyla yüklendi (${finalRecords.length} sefer bulundu).', 
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green);
+
+    } catch (e) {
+      Get.snackbar('Hata', 'Dosya okuma/dönüştürme hatası: ${e.toString()}', 
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red);
     }
     isLoading.value = false;
   }
@@ -526,10 +788,12 @@ void _showModernToast(String title, String message, {required bool isSuccess}) {
 
     if (record.arrivalTimes.isEmpty || stops.isEmpty) return;
 
+    // 1. حساب وقت الانطلاق المرجعي (Expected Start Time)
     String thisRecordReferenceTime = _calculateReferenceStartTimeForRecord(rowIndex);
     String actualStartTime = record.arrivalTimes[0];
     int startDelay = _calculateTimeDifference(thisRecordReferenceTime, actualStartTime);
 
+    // إضافة أول نقطة (نقطة الانطلاق)
     stopDelays.add(StopDelay(
       stopName: "${stops[0].name} (Referans: $thisRecordReferenceTime)",
       delayMinutes: startDelay > 0 ? startDelay : 0,
@@ -541,19 +805,26 @@ void _showModernToast(String title, String message, {required bool isSuccess}) {
       totalDelay += startDelay;
     }
 
+    // 2. حساب التأخير بين المحطات
     for (int i = 1; i < record.arrivalTimes.length && i < stops.length; i++) {
       String previousStopTime = record.arrivalTimes[i - 1];
       String currentStopTime = record.arrivalTimes[i];
+      
+      // المدة الفعلية المستغرقة بين المحطتين
       int actualDuration = _calculateTimeDifference(previousStopTime, currentStopTime);
 
+      // المدة المرجعية المتوقعة بين المحطتين
       int referenceDuration = stops[i].durationFromPrevious;
+      
+      // التأخير التراكمي في هذا المقطع (segment delay)
       int segmentDelay = actualDuration - referenceDuration;
 
+      // الوقت المتوقع للوصول لهذه المحطة بناءً على وصول المحطة السابقة + المدة المرجعية
       String expectedArrivalTime = _addMinutesToTime(previousStopTime, referenceDuration);
 
       stopDelays.add(StopDelay(
         stopName: stops[i].name + (i == stops.length - 1 ? " (Son Durak)" : ""),
-        delayMinutes: segmentDelay > 0 ? segmentDelay : 0,
+        delayMinutes: segmentDelay > 0 ? segmentDelay : 0, // فقط التأخير الموجب
         expectedTime: expectedArrivalTime,
         actualTime: currentStopTime,
       ));
@@ -619,10 +890,6 @@ void _showModernToast(String title, String message, {required bool isSuccess}) {
     }
 
     final pdf = pw.Document();
-    
-    // يجب تحميل خط يدعم اللغة التركية إذا كان التطبيق سيُطبع في تركيا
-    // سنستخدم خط افتراضي لـ PDF (لا يدعم الأحرف التركية) ولهذا استخدمنا _turkishToAscii
-    // يمكنك إضافة خط مخصص هنا: final font = await PdfGoogleFonts.notoSansTurkish();
     
     pdf.addPage(
       pw.MultiPage(
